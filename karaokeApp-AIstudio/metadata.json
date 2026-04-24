@@ -1,0 +1,6 @@
+{
+  "name": "Karaoke Night Live",
+  "description": "An all-in-one application for hosting and participating in karaoke events. Manage local and online song libraries, handle singer queues, and engage the audience with real-time reactions and requests.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

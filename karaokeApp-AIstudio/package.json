@@ -1,0 +1,31 @@
+{
+  "name": "karaoke-night-live",
+  "description": "An all-in-one application for hosting and participating in karaoke events with AI song suggestions and YouTube integration.",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "keywords": [
+    "karaoke",
+    "react",
+    "vite",
+    "gemini-ai",
+    "youtube",
+    "mediamonkey"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/genai": "^1.27.0",
+    "react-dom": "^19.2.0",
+    "react": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}
