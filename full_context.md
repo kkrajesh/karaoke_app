@@ -16,11 +16,12 @@ Instead of relying on cloud databases like Firebase, the application is **offlin
 3. Hosts REST API endpoints for queue management, state synchronization, and YouTube proxying.
 4. Uses `media_kit` (VLC/MPV wrapper) to natively extract and play YouTube streams, bypassing YouTube's iframe DRM and web browser limitations ("Video Unavailable").
 
-### The Clients (Web Browsers)
-1. Access the application by typing the Host's local IP address (e.g., `http://192.168.1.50:8080`).
-2. Run as a Flutter Web SPA (Single Page Application).
+### The Clients (Web Browsers or Native Android/Windows apps)
+1. Access the application by typing the Host's local IP address (e.g., `http://192.168.1.50:8080`) in a browser, or by launching the Native APK and entering the Host IP.
+2. If using the browser, run as a Flutter Web SPA (Single Page Application). If using the APK, run natively.
 3. Poll the Host API to stay synchronized with the currently playing song and queue.
-4. Cannot query YouTube directly due to strict browser CORS (Cross-Origin Resource Sharing) policies, so they proxy search queries through the Host API.
+4. Cannot query YouTube directly from the Web due to strict browser CORS policies, so they proxy search queries through the Host API.
+5. Stream local media (`.mp4`, `.opus`) from the host via the `/local-media` HTTP endpoint.
 
 ---
 
@@ -31,8 +32,9 @@ Instead of relying on cloud databases like Firebase, the application is **offlin
 * **Local Networking:** `shelf`, `shelf_router`, `shelf_static`
 * **Network Info:** `network_info_plus` (to get the LAN IP address)
 * **Native Video Player:** `media_kit`, `media_kit_video`
-* **Web Video Player:** `youtube_player_iframe`
+* **Web Video Player:** `youtube_player_iframe`, `video_player` (for local media)
 * **YouTube Extraction:** `youtube_explode_dart`
+* **Local Media Database:** `sqflite_common_ffi` (used to query the MediaMonkey `MM.DB`)
 
 ---
 
@@ -48,7 +50,8 @@ The Host boots up a background `shelf` server upon startup in `HostDashboard`. I
 * `GET /now-playing`: Returns the currently playing `Song` object.
 * `GET /reactions`: Returns the latest 20 audience emoji/comment reactions.
 * `POST /reactions`: Posts a new reaction.
-* `GET /search?q=...`: Proxies a YouTube search. The Host's native `youtube_explode_dart` instance fetches the data and returns the JSON payload, circumventing browser CORS issues.
+* `GET /search?q=...`: Proxies a YouTube search or queries the local `MM.DB`. The Host's native instances fetch the data and return the JSON payload, circumventing browser CORS issues and avoiding exposing the local database directly.
+* `GET /local-media?path=...`: Streams a physical media file (e.g., `.mp4`, `.mkv`) from the host's hard drive to web clients using `dart:io` chunked streaming.
 
 ---
 
@@ -81,11 +84,11 @@ if (kIsWeb) {
 }
 ```
 
-The native Windows/Android player uses `youtubeServiceProvider.getVideoStreamUrl()` to extract the raw `.mp4` stream directly from YouTube's servers, completely bypassing the browser. 
+The native Windows/Android player uses `youtubeServiceProvider.getVideoStreamUrl()` to extract the raw `.mp4` stream directly from YouTube's servers, completely bypassing the browser. For local files (e.g., MediaMonkey library paths), it plays the `file:///` URI directly from the disk.
 
 **The Public Display Rule:** 
 Because of this, the "Stage TV" (where the lyrics actually play) should **always** be driven by the Native Windows/Android app. You open a *second instance* of the native app on the host laptop (or TV box), drag it to the TV HDMI output, and select the **Public Display** role. 
-The Public display utilizes `didUpdateWidget` stream injection to seamlessly transition between songs without tearing down the underlying `media_kit` C++ rendering pipeline.
+The Public Display logic utilizes a brief 600ms `null` reset during queue transitions. This forces Flutter to safely unmount and destroy the underlying `media_kit` C++ hardware texture before building the next video player, preventing Direct3D access violations and crashes on Windows.
 
 ---
 

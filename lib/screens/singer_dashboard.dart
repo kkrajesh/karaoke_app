@@ -69,7 +69,7 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
     });
   }
 
-  void _previewSong(String videoId) {
+  void _previewSong(LibrarySong librarySong) {
     showDialog(
       context: context,
       builder: (context) {
@@ -78,7 +78,17 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
           contentPadding: EdgeInsets.zero,
           content: AspectRatio(
             aspectRatio: 16 / 9,
-            child: PlayerScreen(videoId: videoId),
+            child: PlayerScreen(
+              song: Song(
+                id: 'preview',
+                videoId: librarySong.videoId,
+                title: librarySong.title,
+                isLocal: librarySong.source == 'local',
+                requestedBy: 'preview',
+                requestedByName: 'preview',
+                addedAt: DateTime.now(),
+              ),
+            ),
           ),
           actions: [
             TextButton(
@@ -234,12 +244,18 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Song Library', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Song Library', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight)),
+                    const SourceMultiSelect(),
+                  ],
+                ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _searchController,
                   onChanged: (val) => ref.read(searchQueryProvider.notifier).updateQuery(val),
-                  decoration: const InputDecoration(hintText: 'Search songs or artists...', isDense: true),
+                  decoration: const InputDecoration(hintText: 'Search songs or artists...', isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12)),
                 ),
               ],
             ),
@@ -286,8 +302,8 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
     final isSelected = _selectedSong?.id == song.id;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.only(bottom: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: isSelected ? AppTheme.accentPurple.withOpacity(0.2) : AppTheme.bgInput,
         borderRadius: BorderRadius.circular(8),
@@ -300,18 +316,17 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(song.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(song.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(song.artist, style: const TextStyle(color: AppTheme.textMuted, fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 2),
-                Text(song.artist, style: const TextStyle(color: AppTheme.textMuted, fontSize: 10)),
-                const SizedBox(height: 4),
                 Row(
                   children: [
                     for (int i = 0; i < 5; i++)
-                      Icon(Icons.star, size: 14, color: i < song.rating ? Colors.amber : AppTheme.border),
+                      Icon(Icons.star, size: 10, color: i < song.rating ? Colors.amber : AppTheme.border),
                     if (song.hasPreview) ...[
                       const SizedBox(width: 8),
                       InkWell(
-                        onTap: () => _previewSong(song.videoId),
+                        onTap: () => _previewSong(song),
                         borderRadius: BorderRadius.circular(4),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -341,10 +356,10 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.accentPurple,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  minimumSize: const Size(60, 36),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                  minimumSize: const Size(50, 28),
                 ),
-                child: Text(isSelected ? 'Selected' : 'Sing', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                child: Text(isSelected ? 'Selected' : 'Sing', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
               ),
             ],
           )

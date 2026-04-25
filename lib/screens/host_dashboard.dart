@@ -102,10 +102,32 @@ class HostDashboard extends ConsumerWidget {
                   boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, spreadRadius: 2)],
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: PlayerScreen(videoId: nowPlaying.videoId, key: ValueKey(nowPlaying.id)),
+                child: PlayerScreen(song: nowPlaying),
               ),
-            )
-          else
+            ),
+          if (nowPlaying != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.bgInput,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.border, width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Debug Metadata:', style: TextStyle(color: AppTheme.textMuted, fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('ID: ${nowPlaying.id}', style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                  Text('Type: ${nowPlaying.isLocal ? "Local File" : "YouTube Video"}', style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                  Text('Source/Path: ${nowPlaying.videoId}', style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                  if (nowPlaying.isLocal)
+                    Text('Resolved File URL: file:///${nowPlaying.videoId.replaceAll('\\\\', '/')}', style: const TextStyle(color: Colors.amberAccent, fontSize: 12)),
+                ],
+              ),
+            ),
+          ] else
             AspectRatio(
               aspectRatio: 16 / 9,
               child: Container(

@@ -151,8 +151,18 @@ class SessionStateNotifier extends Notifier<SessionState> {
     final remainingQueue = state.queue.sublist(1);
     final upNext = remainingQueue.isNotEmpty ? remainingQueue.first : null;
 
+    // First, clear the current song to force the player to unmount safely
     state = state.copyWithNullableNowPlaying(
       queue: remainingQueue,
+      clearNowPlaying: true,
+      funFact: 'Loading next singer...',
+    );
+
+    // Wait a moment for the GPU to flush the old video texture
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    // Now push the new song
+    state = state.copyWithNullableNowPlaying(
       nowPlaying: nextSong,
       funFact: 'Generating AI Fact...',
     );

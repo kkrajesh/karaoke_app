@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-class SourceMultiSelect extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/library_provider.dart';
+
+class SourceMultiSelect extends ConsumerStatefulWidget {
   const SourceMultiSelect({super.key});
 
   @override
-  State<SourceMultiSelect> createState() => _SourceMultiSelectState();
+  ConsumerState<SourceMultiSelect> createState() => _SourceMultiSelectState();
 }
 
-class _SourceMultiSelectState extends State<SourceMultiSelect> {
-  final List<String> _allSources = ['YouTube', 'MediaMonkey', 'Local Files', 'Smule'];
-  late Set<String> _selected;
+class _SourceMultiSelectState extends ConsumerState<SourceMultiSelect> {
+  final List<String> _allSources = ['YouTube', 'MediaMonkey', 'Smule'];
 
   @override
   void initState() {
     super.initState();
-    _selected = Set.from(_allSources);
   }
 
   void _showSelectionDialog() {
+    // Create a local mutable copy for the dialog state
+    Set<String> localSelected = Set.from(ref.read(selectedSourcesProvider));
+
     showDialog(
       context: context,
       builder: (context) {
@@ -33,36 +37,36 @@ class _SourceMultiSelectState extends State<SourceMultiSelect> {
                   children: [
                     CheckboxListTile(
                       title: const Text('All Sources', style: TextStyle(color: Colors.white)),
-                      value: _selected.length == _allSources.length,
+                      value: localSelected.length == _allSources.length,
                       activeColor: AppTheme.accentPurple,
                       checkColor: Colors.white,
                       onChanged: (bool? checked) {
                         setStateDialog(() {
                           if (checked == true) {
-                            _selected = Set.from(_allSources);
+                            localSelected = Set.from(_allSources);
                           } else {
-                            _selected.clear();
+                            localSelected.clear();
                           }
+                          ref.read(selectedSourcesProvider.notifier).setSources(localSelected);
                         });
-                        setState(() {});
                       },
                     ),
                     const Divider(color: AppTheme.border),
                     ..._allSources.map((source) {
                       return CheckboxListTile(
                         title: Text(source, style: const TextStyle(color: AppTheme.textMuted)),
-                        value: _selected.contains(source),
+                        value: localSelected.contains(source),
                         activeColor: AppTheme.accentPurple,
                         checkColor: Colors.white,
                         onChanged: (bool? checked) {
                           setStateDialog(() {
                             if (checked == true) {
-                              _selected.add(source);
+                              localSelected.add(source);
                             } else {
-                              _selected.remove(source);
+                              localSelected.remove(source);
                             }
+                            ref.read(selectedSourcesProvider.notifier).setSources(localSelected);
                           });
-                          setState(() {});
                         },
                       );
                     }).toList(),
@@ -84,9 +88,10 @@ class _SourceMultiSelectState extends State<SourceMultiSelect> {
 
   @override
   Widget build(BuildContext context) {
-    String label = _selected.length == _allSources.length 
+    final currentSelected = ref.watch(selectedSourcesProvider);
+    String label = currentSelected.length == _allSources.length 
         ? 'All Sources' 
-        : '${_selected.length} Sources';
+        : '${currentSelected.length} Sources';
 
     return InkWell(
       onTap: _showSelectionDialog,

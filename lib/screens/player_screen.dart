@@ -5,11 +5,15 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import '../services/youtube_service.dart';
+import '../providers/app_state_provider.dart';
+
+import '../models/song.dart';
+import 'package:video_player/video_player.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
-  final String videoId;
+  final Song song;
 
-  const PlayerScreen({super.key, required this.videoId});
+  const PlayerScreen({super.key, required this.song});
 
   @override
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
@@ -17,7 +21,8 @@ class PlayerScreen extends ConsumerStatefulWidget {
 
 class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   // Web Player
-  YoutubePlayerController? _webController;
+  YoutubePlayerController? _webYtController;
+  VideoPlayerController? _webLocalController;
   
   // Native Player (Windows/Android)
   late final Player _nativePlayer;
@@ -30,22 +35,40 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     super.initState();
 
     if (kIsWeb) {
-      _webController = YoutubePlayerController.fromVideoId(
-        videoId: widget.videoId,
-        autoPlay: true,
-        params: const YoutubePlayerParams(
-          showControls: true,
-          showFullscreenButton: true,
-        ),
-      );
+      if (widget.song.isLocal) {
+        _initWebLocalPlayer(widget.song.videoId);
+      } else {
+        _initWebYtPlayer(widget.song.videoId);
+      }
     } else {
       _nativePlayer = Player();
       _nativeController = VideoController(_nativePlayer);
-      _initNativePlayer(widget.videoId);
+      _initNativePlayer(widget.song);
     }
   }
 
-  Future<void> _initNativePlayer(String videoId) async {
+  void _initWebYtPlayer(String videoId) {
+    _webYtController = YoutubePlayerController.fromVideoId(
+      videoId: videoId,
+      autoPlay: true,
+      params: const YoutubePlayerParams(
+        showControls: true,
+        showFullscreenButton: true,
+      ),
+    );
+  }
+
+  Future<void> _initWebLocalPlayer(String path) async {
+    final ip = ref.read(clientHostIpProvider) ?? '127.0.0.1';
+    final url = 'http://$ip:8080/local-media?path=${Uri.encodeComponent(path)}';
+    
+    _webLocalController = VideoPlayerController.networkUrl(Uri.parse(url));
+    await _webLocalController!.initialize();
+    _webLocalController!.play();
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _initNativePlayer(Song song) async {
     try {
       if (mounted) {
         setState(() {
@@ -54,11 +77,18 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         });
       }
 
-      final ytService = ref.read(youtubeServiceProvider);
-      final streamUrl = await ytService.getVideoStreamUrl(videoId);
+      String? streamUrl;
+      
+      if (song.isLocal) {
+        // For native, we can just play the file path directly from disk
+        streamUrl = 'file:///' + song.videoId.replaceAll('\\\\', '/');
+      } else {
+        final ytService = ref.read(youtubeServiceProvider);
+        streamUrl = await ytService.getVideoStreamUrl(song.videoId);
+      }
       
       if (streamUrl != null && mounted) {
-        await _nativePlayer.open(Media(streamUrl));
+        await _nativePlayer.open(Media(streamUrl), play: true);
         _nativePlayer.play();
         setState(() {
           _isLoadingNative = false;
@@ -79,18 +109,31 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   @override
   void didUpdateWidget(PlayerScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.videoId != widget.videoId) {
+    if (oldWidget.song.id != widget.song.id) {
       if (kIsWeb) {
-        _webController?.loadVideoById(videoId: widget.videoId);
+        if (widget.song.isLocal) {
+          _webYtController?.close();
+          _webYtController = null;
+          _initWebLocalPlayer(widget.song.videoId);
+        } else {
+          _webLocalController?.dispose();
+          _webLocalController = null;
+          if (_webYtController != null) {
+            _webYtController!.loadVideoById(videoId: widget.song.videoId);
+          } else {
+            _initWebYtPlayer(widget.song.videoId);
+          }
+        }
       } else {
-        _initNativePlayer(widget.videoId);
+        _initNativePlayer(widget.song);
       }
     }
   }
 
   @override
   void dispose() {
-    _webController?.close();
+    _webYtController?.close();
+    _webLocalController?.dispose();
     if (!kIsWeb) {
       _nativePlayer.dispose();
     }
@@ -100,19 +143,32 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
-      return Center(
-        child: YoutubePlayer(
-          controller: _webController!,
-          aspectRatio: 16 / 9,
-        ),
-      );
+      if (widget.song.isLocal) {
+        if (_webLocalController != null && _webLocalController!.value.isInitialized) {
+          return Center(
+            child: AspectRatio(
+              aspectRatio: _webLocalController!.value.aspectRatio,
+              child: VideoPlayer(_webLocalController!),
+            ),
+          );
+        } else {
+          return const Center(child: CircularProgressIndicator());
+        }
+      } else {
+        if (_webYtController != null) {
+          return Center(
+            child: YoutubePlayer(
+              controller: _webYtController!,
+              aspectRatio: 16 / 9,
+            ),
+          );
+        } else {
+          return const Center(child: CircularProgressIndicator());
+        }
+      }
     }
 
     // Native Build
-    if (_isLoadingNative) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     if (_nativeError != null) {
       return Center(
         child: Padding(
@@ -125,7 +181,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     return Center(
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: Video(controller: _nativeController),
+        child: Stack(
+          children: [
+            Video(controller: _nativeController),
+            if (_isLoadingNative)
+              const Center(child: CircularProgressIndicator()),
+          ],
+        ),
       ),
     );
   }

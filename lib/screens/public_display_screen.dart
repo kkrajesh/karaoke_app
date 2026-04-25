@@ -21,7 +21,7 @@ class PublicDisplayScreen extends ConsumerWidget {
           if (nowPlaying != null)
             Positioned.fill(
               child: PlayerScreen(
-                videoId: nowPlaying.videoId,
+                song: nowPlaying,
               ),
             )
           else

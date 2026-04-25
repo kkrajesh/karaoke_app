@@ -12,6 +12,8 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
   * Powered by `youtube_player_iframe` on the web.
 * **Local Network API:** Queue management, current playing status, live audience reactions, and YouTube search proxying are all handled by the local server over HTTP.
 * **CORS Proxy:** Built-in proxy using `youtube_explode_dart` allows web clients to search YouTube directly through the host, avoiding browser CORS blocks.
+* **Local MediaMonkey DB Integration:** Direct integration with MediaMonkey SQLite databases (`MM.DB`) allows searching and playing locally stored MP4/Opus/MKV files directly from the hard drive, seamlessly merged with YouTube results.
+* **Android Client Support:** Compiles into a standalone Android APK, so dedicated tablets can connect to the host without relying on web browser video limitations.
 * **Roles:**
   * **Host:** Manages the queue, plays the next song, manages the library, and controls the room.
   * **Singer:** Browses songs, selects from local or YouTube libraries, and joins the queue.
@@ -19,14 +21,31 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
   * **Public Display:** A TV-optimized full-screen stage mode for the current singer, complete with a live-streaming chat overlay for audience reactions.
 
 ## Roadmap
-* [ ] local library management
-    * [ ] file based library 
-    * [ ] mediamonkey integration
+* [x] local library management
+    * [x] file based library 
+    * [x] mediamonkey integration
 * [ ] smule integration
 * [ ] queue management - reorder singer, remove singer, recall singer
 * [x] display logo, song title, singer name (Audience View)
 * [] AI to help prepare intro message for each singer and song (Teleprompter mockup built)
 * [] AI to help song trivia for current song (Teleprompter mockup built)
+* [] Audience can select songs from library as a request (Host will review and add to queue). 
+    * [] Ability to nudge request to up or down the queue. 
+    * [] Ability to delete requests. 
+    * [] Ability to add a note to a request. 
+* [ ] Host should be able to add songs to the queue from library or YouTube or Smule for a specific singer
+* [ ] Ability to add songs to library or YouTube or Smule from the Queue
+* [ ] Host Controls - Push a count down timer/warning to the public display.
+* [ ] Host Controls - Push a message to the public display and audience display and chat.
+* [ ] Host Controls - Push a reminder message about where to find song requests and request songs.
+* [ ] Host Controls - Push messages about food and drinks, restrooms, etc on public display and audience display
+* [ ] Host Controls - Push messages about upcoming events, etc on public display and audience display
+* [ ] Public Display (TV) should have the option to display a queue of upcoming songs and singers, in between performances
+  * [ ] Public Display (TV) should have the option to display promotional messages/videos/slideshows in between performances
+* [ ] public display - play the karaoke video in a separate frame and have side/bottom areas for additional message. Somewhat like the host screen but optimized for TV with less controls and more real estate for the video and messages. The current build has a full screen mode for this, but it doesn't allow for any additional messages. This is needed to be able to display the youtube video on the TV and at the same time display messages, etc.
+* [ ] **Dynamic MediaMonkey DB Configuration**: Add a file-picker settings menu on the Host dashboard to select the `MM.DB` file path dynamically instead of hardcoding `C:\Data\Rajesh\Dev\data\MM.DB`.
+* [ ] **Windows Native Player Transitions**: Fix the reliability of dynamically transitioning `media_kit` between streams without needing the 600ms reset trick.
+
 
 
 ## Getting Started
