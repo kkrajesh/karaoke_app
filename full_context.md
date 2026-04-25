@@ -26,8 +26,8 @@ Instead of relying on cloud databases like Firebase, the application is **offlin
 
 ## 2. Tech Stack & Key Dependencies
 
-* **Framework:** Flutter (Web and Windows Desktop)
-* **State Management:** Riverpod (`flutter_riverpod`)
+* **Framework:** Flutter (Web, Android, and Windows Desktop)
+* **State Management:** Riverpod (`flutter_riverpod` 3.x with `NotifierProvider`)
 * **Local Networking:** `shelf`, `shelf_router`, `shelf_static`
 * **Network Info:** `network_info_plus` (to get the LAN IP address)
 * **Native Video Player:** `media_kit`, `media_kit_video`
@@ -52,7 +52,15 @@ The Host boots up a background `shelf` server upon startup in `HostDashboard`. I
 
 ---
 
-## 4. State Management (`SessionStateNotifier`)
+## 4. AI Teleprompter Service (`AiService`)
+
+The Host includes an integrated AI Teleprompter (`AiService`) to generate live facts and introductory scripts for the host.
+When the queue advances, the `SessionStateNotifier` queries the AI Service with the current song and upcoming singer data.
+This generates a contextual fun fact which is synced across the network and displayed exclusively on the `HostDashboard`.
+
+---
+
+## 5. State Management (`SessionStateNotifier`)
 
 The global state for the karaoke room is maintained by Riverpod via `SessionStateNotifier`.
 
@@ -61,7 +69,7 @@ The global state for the karaoke room is maintained by Riverpod via `SessionStat
 
 ---
 
-## 5. Media Playback Architecture (`PlayerScreen`)
+## 6. Media Playback Architecture (`PlayerScreen`)
 
 Because YouTube blocks its videos from playing in IFrames on unknown domains or local IPs, the Web client is fundamentally limited in what it can play. To solve this, the application uses a dual-engine `PlayerScreen`.
 
@@ -73,19 +81,20 @@ if (kIsWeb) {
 }
 ```
 
-The native Windows player uses `youtubeServiceProvider.getVideoStreamUrl()` to extract the raw `.mp4` stream directly from YouTube's servers, completely bypassing the browser. 
+The native Windows/Android player uses `youtubeServiceProvider.getVideoStreamUrl()` to extract the raw `.mp4` stream directly from YouTube's servers, completely bypassing the browser. 
 
 **The Public Display Rule:** 
-Because of this, the "Stage TV" (where the lyrics actually play) should **always** be driven by the Native Windows app. You open a *second instance* of the `.exe` on the host laptop, drag it to the TV HDMI output, and select the **Public Display** role. 
+Because of this, the "Stage TV" (where the lyrics actually play) should **always** be driven by the Native Windows/Android app. You open a *second instance* of the native app on the host laptop (or TV box), drag it to the TV HDMI output, and select the **Public Display** role. 
+The Public display utilizes `didUpdateWidget` stream injection to seamlessly transition between songs without tearing down the underlying `media_kit` C++ rendering pipeline.
 
 ---
 
-## 6. Build & Deployment Lifecycle
+## 7. Build & Deployment Lifecycle
 
 If you make *any* changes to the UI, logic, or dependencies of the Flutter application, you **must** rebuild the web client so the Host can serve the updated static files.
 
 **Build Workflow:**
 1. Code your changes.
 2. Run `flutter build web` to compile the JS/Wasm bundles into the `build/web` directory.
-3. Run `flutter run -d windows` (or build a release `.exe`) to start the host.
+3. Run `flutter run -d windows` (or build a release `.exe`) to start the host. Wait for the shelf server to boot up.
 4. Clients connecting via IP will now receive the newly compiled application.

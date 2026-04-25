@@ -93,15 +93,16 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width > 768;
     return Scaffold(
       appBar: AppBar(
-        title: const Column(
+        title: Column(
           children: [
-            GradientText('Karaoke Night Live', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-            Text('Your ultimate karaoke party companion', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+            GradientText('Karaoke Night Live', style: TextStyle(fontSize: isDesktop ? 28 : 20, fontWeight: FontWeight.bold)),
+            Text('Your ultimate karaoke party companion', style: const TextStyle(color: AppTheme.textMuted, fontSize: 10)),
           ]
         ),
-        toolbarHeight: 64,
+        toolbarHeight: isDesktop ? 64 : 48,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
@@ -135,8 +136,8 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Sign Up to Sing', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight)),
-          const SizedBox(height: 12),
+          const Text('Sign Up to Sing', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight)),
+          const SizedBox(height: 8),
           if (isDesktop)
             Row(
               children: [
@@ -164,21 +165,29 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextField(controller: _stageNameController, decoration: const InputDecoration(hintText: 'Your Stage Name')),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                  decoration: BoxDecoration(color: AppTheme.bgInput, borderRadius: BorderRadius.circular(6), border: Border.all(color: AppTheme.border)),
-                  child: Text(
-                    _selectedSong?.title ?? 'Select a song below...',
-                    style: TextStyle(color: _selectedSong == null ? AppTheme.textMuted : Colors.white),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: _joinQueue,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), padding: const EdgeInsets.symmetric(vertical: 16)), // Green-800
-                  child: const Text('Join Queue', style: TextStyle(fontWeight: FontWeight.bold)),
+                TextField(controller: _stageNameController, decoration: const InputDecoration(hintText: 'Your Stage Name', isDense: true)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                        decoration: BoxDecoration(color: AppTheme.bgInput, borderRadius: BorderRadius.circular(6), border: Border.all(color: AppTheme.border)),
+                        child: Text(
+                          _selectedSong?.title ?? 'Select a song below...',
+                          style: TextStyle(color: _selectedSong == null ? AppTheme.textMuted : Colors.white, fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: _joinQueue,
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10)), // Green-800
+                      child: const Text('Join', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -192,7 +201,7 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
     final asyncSongs = ref.watch(filteredLibraryProvider);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(8),
@@ -225,16 +234,16 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Song Library', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight)),
-                const SizedBox(height: 16),
+                const Text('Song Library', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight)),
+                const SizedBox(height: 8),
                 TextField(
                   controller: _searchController,
                   onChanged: (val) => ref.read(searchQueryProvider.notifier).updateQuery(val),
-                  decoration: const InputDecoration(hintText: 'Search songs or artists...'),
+                  decoration: const InputDecoration(hintText: 'Search songs or artists...', isDense: true),
                 ),
               ],
             ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           
           Expanded(
             child: asyncSongs.when(
@@ -277,8 +286,8 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
     final isSelected = _selectedSong?.id == song.id;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: isSelected ? AppTheme.accentPurple.withOpacity(0.2) : AppTheme.bgInput,
         borderRadius: BorderRadius.circular(8),
@@ -291,23 +300,23 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(song.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(song.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 2),
+                Text(song.artist, style: const TextStyle(color: AppTheme.textMuted, fontSize: 10)),
                 const SizedBox(height: 4),
-                Text(song.artist, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                const SizedBox(height: 6),
                 Row(
                   children: [
                     for (int i = 0; i < 5; i++)
-                      Icon(Icons.star, size: 16, color: i < song.rating ? Colors.amber : AppTheme.border),
+                      Icon(Icons.star, size: 14, color: i < song.rating ? Colors.amber : AppTheme.border),
                     if (song.hasPreview) ...[
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       InkWell(
                         onTap: () => _previewSong(song.videoId),
                         borderRadius: BorderRadius.circular(4),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(border: Border.all(color: Colors.white), borderRadius: BorderRadius.circular(4)),
-                          child: const Text('Preview', style: TextStyle(fontSize: 10)),
+                          child: const Text('Preview', style: TextStyle(fontSize: 9)),
                         ),
                       )
                     ]
@@ -323,15 +332,19 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
               else if (customIconText != null)
                 Text(customIconText, style: TextStyle(color: iconColor, fontWeight: FontWeight.bold, fontSize: 16)),
               
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               ElevatedButton(
                 onPressed: () {
                   setState(() {
                     _selectedSong = song;
                   });
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentPurple),
-                child: Text(isSelected ? 'Selected' : 'Sing', style: const TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accentPurple,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  minimumSize: const Size(60, 36),
+                ),
+                child: Text(isSelected ? 'Selected' : 'Sing', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
               ),
             ],
           )
@@ -343,7 +356,7 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
   Widget _buildAISuggestionsCard() {
     final isDesktop = MediaQuery.of(context).size.width > 768;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(8),
@@ -353,15 +366,15 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
         children: [
           const Row(
             children: [
-              Icon(Icons.auto_awesome, color: AppTheme.accentPurpleLight),
+              Icon(Icons.auto_awesome, color: AppTheme.accentPurpleLight, size: 20),
               SizedBox(width: 8),
               Text(
                 'AI Song Suggestions',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           if (isDesktop)
             Row(
               children: [
@@ -381,19 +394,22 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
               ],
             )
           else
-             Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            Row(
               children: [
-                const TextField(
-                  decoration: InputDecoration(
-                    hintText: "e.g., 'an 80s power ballad'",
+                const Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: "e.g., '80s rock'",
+                      isDense: true,
+                    ),
+                    style: TextStyle(fontSize: 14),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(width: 8),
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentPink, padding: const EdgeInsets.symmetric(vertical: 16)),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentPink, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12)),
                   onPressed: () {},
-                  child: const Text('Suggest', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text('Suggest', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                 ),
               ],
             )

@@ -4,27 +4,33 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/song.dart';
+import '../providers/app_state_provider.dart';
+import '../services/ai_service.dart';
 
 class SessionState {
   final List<Song> queue;
   final Song? nowPlaying;
   final List<Map<String, dynamic>> reactions;
+  final String? funFact;
 
   SessionState({
     this.queue = const [],
     this.nowPlaying,
     this.reactions = const [],
+    this.funFact,
   });
 
   SessionState copyWith({
     List<Song>? queue,
     Song? nowPlaying,
     List<Map<String, dynamic>>? reactions,
+    String? funFact,
   }) {
     return SessionState(
       queue: queue ?? this.queue,
       nowPlaying: nowPlaying ?? this.nowPlaying,
       reactions: reactions ?? this.reactions,
+      funFact: funFact ?? this.funFact,
     );
   }
   
@@ -32,11 +38,13 @@ class SessionState {
     List<Song>? queue,
     Song? nowPlaying,
     bool clearNowPlaying = false,
+    String? funFact,
   }) {
     return SessionState(
       queue: queue ?? this.queue,
       nowPlaying: clearNowPlaying ? null : (nowPlaying ?? this.nowPlaying),
       reactions: this.reactions,
+      funFact: funFact ?? this.funFact,
     );
   }
 }
@@ -44,9 +52,19 @@ class SessionState {
 class SessionStateNotifier extends Notifier<SessionState> {
   Timer? _pollTimer;
 
+  bool get _isClient => kIsWeb || ref.read(clientHostIpProvider) != null;
+  String get _baseUrl {
+    if (kIsWeb) return '';
+    final ip = ref.read(clientHostIpProvider);
+    return ip != null ? 'http://$ip:8080' : '';
+  }
+
   @override
   SessionState build() {
-    if (kIsWeb) {
+    // Watch the clientHostIpProvider so that changing the IP resets the state and polling
+    ref.watch(clientHostIpProvider);
+    
+    if (_isClient) {
       _startPolling();
     }
     
@@ -67,21 +85,21 @@ class SessionStateNotifier extends Notifier<SessionState> {
 
   Future<void> _fetchStateFromServer() async {
     try {
-      final queueRes = await http.get(Uri.parse('/queue'));
+      final queueRes = await http.get(Uri.parse('$_baseUrl/queue'));
       if (queueRes.statusCode == 200) {
         final List<dynamic> data = jsonDecode(queueRes.body);
         final queue = data.map((e) => Song.fromMap(e, e['id'] ?? '')).toList();
         state = state.copyWith(queue: queue);
       }
 
-      final npRes = await http.get(Uri.parse('/now-playing'));
+      final npRes = await http.get(Uri.parse('$_baseUrl/now-playing'));
       if (npRes.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(npRes.body);
         final nowPlaying = data.isEmpty ? null : Song.fromMap(data, data['id'] ?? '');
         state = state.copyWithNullableNowPlaying(nowPlaying: nowPlaying, clearNowPlaying: data.isEmpty);
       }
 
-      final reactRes = await http.get(Uri.parse('/reactions'));
+      final reactRes = await http.get(Uri.parse('$_baseUrl/reactions'));
       if (reactRes.statusCode == 200) {
         final List<dynamic> rdata = jsonDecode(reactRes.body);
         final reactions = rdata.map((r) => r as Map<String, dynamic>).toList();
@@ -93,10 +111,10 @@ class SessionStateNotifier extends Notifier<SessionState> {
   }
 
   Future<void> addToQueue(Song song) async {
-    if (kIsWeb) {
+    if (_isClient) {
       try {
         await http.post(
-          Uri.parse('/queue'),
+          Uri.parse('$_baseUrl/queue'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(song.toMap()),
         );
@@ -115,9 +133,9 @@ class SessionStateNotifier extends Notifier<SessionState> {
   }
 
   Future<void> playNext() async {
-    if (kIsWeb) {
+    if (_isClient) {
       try {
-        await http.post(Uri.parse('/play-next'));
+        await http.post(Uri.parse('$_baseUrl/play-next'));
       } catch (e) {
         print('Error posting playNext: $e');
       }
@@ -125,23 +143,34 @@ class SessionStateNotifier extends Notifier<SessionState> {
     }
 
     if (state.queue.isEmpty) {
-      state = state.copyWithNullableNowPlaying(clearNowPlaying: true);
+      state = state.copyWithNullableNowPlaying(clearNowPlaying: true, funFact: null);
       return;
     }
 
     final nextSong = state.queue.first;
     final remainingQueue = state.queue.sublist(1);
+    final upNext = remainingQueue.isNotEmpty ? remainingQueue.first : null;
 
     state = state.copyWithNullableNowPlaying(
       queue: remainingQueue,
       nowPlaying: nextSong,
+      funFact: 'Generating AI Fact...',
     );
+
+    // Fetch the fun fact asynchronously
+    final aiService = ref.read(aiServiceProvider);
+    final fact = await aiService.generateHostFact(nextSong, upNext);
+    
+    // Check if the song hasn't changed while we were fetching
+    if (state.nowPlaying?.id == nextSong.id) {
+      state = state.copyWith(funFact: fact);
+    }
   }
 
   Future<void> removeFromQueue(String songId) async {
-    if (kIsWeb) {
+    if (_isClient) {
       try {
-        await http.delete(Uri.parse('/queue/$songId'));
+        await http.delete(Uri.parse('$_baseUrl/queue/$songId'));
       } catch (e) {
         print('Error deleting from queue: $e');
       }
@@ -153,17 +182,18 @@ class SessionStateNotifier extends Notifier<SessionState> {
     );
   }
 
-  Future<void> sendReaction(String emoji, String userId) async {
+  Future<void> sendReaction(String user, dynamic reactionValue, {bool isEmoji = true}) async {
     final reaction = {
-      'emoji': emoji,
-      'userId': userId,
+      'user': user,
+      'value': reactionValue,
+      'isEmoji': isEmoji,
       'timestamp': DateTime.now().toIso8601String(),
     };
     
-    if (kIsWeb) {
+    if (_isClient) {
       try {
         await http.post(
-          Uri.parse('/reactions'),
+          Uri.parse('$_baseUrl/reactions'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(reaction),
         );

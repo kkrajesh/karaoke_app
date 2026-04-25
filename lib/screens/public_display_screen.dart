@@ -22,7 +22,6 @@ class PublicDisplayScreen extends ConsumerWidget {
             Positioned.fill(
               child: PlayerScreen(
                 videoId: nowPlaying.videoId,
-                key: ValueKey(nowPlaying.id),
               ),
             )
           else
@@ -83,7 +82,7 @@ class PublicDisplayScreen extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: reactions.take(15).map((r) {
-                  final text = r['emoji'] as String;
+                  final text = r['value'] as String;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Container(

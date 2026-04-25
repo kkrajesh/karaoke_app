@@ -41,14 +41,21 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     } else {
       _nativePlayer = Player();
       _nativeController = VideoController(_nativePlayer);
-      _initNativePlayer();
+      _initNativePlayer(widget.videoId);
     }
   }
 
-  Future<void> _initNativePlayer() async {
+  Future<void> _initNativePlayer(String videoId) async {
     try {
+      if (mounted) {
+        setState(() {
+          _isLoadingNative = true;
+          _nativeError = null;
+        });
+      }
+
       final ytService = ref.read(youtubeServiceProvider);
-      final streamUrl = await ytService.getVideoStreamUrl(widget.videoId);
+      final streamUrl = await ytService.getVideoStreamUrl(videoId);
       
       if (streamUrl != null && mounted) {
         await _nativePlayer.open(Media(streamUrl));
@@ -65,6 +72,18 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
           _nativeError = e.toString();
           _isLoadingNative = false;
         });
+      }
+    }
+  }
+
+  @override
+  void didUpdateWidget(PlayerScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.videoId != widget.videoId) {
+      if (kIsWeb) {
+        _webController?.loadVideoById(videoId: widget.videoId);
+      } else {
+        _initNativePlayer(widget.videoId);
       }
     }
   }

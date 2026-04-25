@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_theme.dart';
 import '../widgets/gradient_text.dart';
 import '../providers/session_state_provider.dart';
-import 'player_screen.dart';
 
 class AudienceDashboard extends ConsumerStatefulWidget {
   const AudienceDashboard({super.key});
@@ -35,9 +34,9 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildNowPlaying(),
-                const SizedBox(height: 24),
                 _buildReactionsCard(),
+                const SizedBox(height: 16),
+                _buildNowPlaying(),
               ],
             ),
           ),
@@ -49,50 +48,58 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
   Widget _buildNowPlaying() {
     final nowPlaying = ref.watch(nowPlayingProvider);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          nowPlaying != null 
-            ? 'Now Playing: ${nowPlaying.requestedByName} - ${nowPlaying.title}' 
-            : 'Now Playing: Nobody', 
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.accentPink),
-          textAlign: TextAlign.center,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.bgCard, AppTheme.bgDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(height: 16),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 10,
-                spreadRadius: 2,
-              )
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: AspectRatio(
-            aspectRatio: 16 / 9,
-            child: nowPlaying != null
-                ? PlayerScreen(videoId: nowPlaying.videoId, key: ValueKey(nowPlaying.id))
-                : const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.mic_external_on, size: 64, color: AppTheme.textMuted),
-                        SizedBox(height: 16),
-                        Text(
-                          'Waiting for the next singer...',
-                          style: TextStyle(fontSize: 24, color: AppTheme.textMuted),
-                        ),
-                      ],
-                    ),
-                  ),
-          ),
-        ),
-      ],
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.accentPurple.withOpacity(0.3), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.accentPurple.withOpacity(0.1),
+            blurRadius: 20,
+            spreadRadius: 5,
+          )
+        ],
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.mic_external_on, size: 48, color: AppTheme.accentPink),
+          const SizedBox(height: 16),
+          if (nowPlaying != null) ...[
+            const Text(
+              'NOW PLAYING',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight, letterSpacing: 2.0),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              nowPlaying.requestedByName,
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'singing "${nowPlaying.title}"',
+              style: const TextStyle(fontSize: 18, color: AppTheme.textMuted, fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center,
+            ),
+          ] else ...[
+            const Text(
+              'Stage is Empty',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textMuted),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Waiting for the next singer...',
+              style: TextStyle(fontSize: 16, color: AppTheme.textMuted),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -136,7 +143,7 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
                   ),
                   onSubmitted: (value) {
                     if (value.isNotEmpty) {
-                      ref.read(sessionStateProvider.notifier).sendReaction(value, 'audience');
+                      ref.read(sessionStateProvider.notifier).sendReaction('audience', value, isEmoji: false);
                       _commentController.clear();
                     }
                   },
@@ -152,7 +159,7 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
                 ),
                 onPressed: () {
                   if (_commentController.text.isNotEmpty) {
-                    ref.read(sessionStateProvider.notifier).sendReaction(_commentController.text, 'audience');
+                    ref.read(sessionStateProvider.notifier).sendReaction('audience', _commentController.text, isEmoji: false);
                     _commentController.clear();
                   }
                 },
@@ -181,7 +188,7 @@ class _EmojiBtn extends StatelessWidget {
       child: IconButton(
         icon: Text(emoji, style: const TextStyle(fontSize: 24)),
         onPressed: () {
-          ref.read(sessionStateProvider.notifier).sendReaction(emoji, 'audience');
+          ref.read(sessionStateProvider.notifier).sendReaction('audience', emoji);
         },
       ),
     );

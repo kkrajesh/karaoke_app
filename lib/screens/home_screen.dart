@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/app_state_provider.dart';
@@ -9,6 +10,7 @@ import 'host_dashboard.dart';
 import 'singer_dashboard.dart';
 import 'audience_dashboard.dart';
 import 'public_display_screen.dart';
+import '../services/local_server_service.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -21,6 +23,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _clientIpController = TextEditingController();
   bool _isLoading = false;
 
   @override
@@ -28,6 +31,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _clientIpController.dispose();
     super.dispose();
   }
 
@@ -168,6 +172,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 style: TextStyle(color: AppTheme.textMuted, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
+              if (!kIsWeb) ...[
+                const SizedBox(height: 32),
+                _buildServerControl(),
+              ],
               const SizedBox(height: 48),
               const Text(
                 'Join the Party! Who are you?',
@@ -245,6 +253,170 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildServerControl() {
+    final server = ref.watch(localServerProvider);
+    final connectedHostIp = ref.watch(clientHostIpProvider);
+    final isClientConnected = connectedHostIp != null;
+    
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: (server.isRunning || isClientConnected) ? AppTheme.accentPurple.withOpacity(0.1) : AppTheme.bgInput,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: (server.isRunning || isClientConnected) ? AppTheme.accentPurple : AppTheme.border,
+          width: 2,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                (server.isRunning || isClientConnected) ? Icons.wifi : Icons.wifi_off,
+                color: (server.isRunning || isClientConnected) ? AppTheme.accentPurpleLight : AppTheme.textMuted,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                server.isRunning 
+                  ? 'Event is Live' 
+                  : isClientConnected 
+                    ? 'Connected as Client' 
+                    : 'Start or Connect to Event',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: (server.isRunning || isClientConnected) ? AppTheme.accentPurpleLight : AppTheme.textMain,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (server.isRunning) ...[
+            Text(
+              'Tell singers to connect to:',
+              style: TextStyle(color: AppTheme.textMuted),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.bgDark,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'http://${server.ipAddress}:8080',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                server.stopServer();
+                setState(() {}); // Trigger rebuild to reflect server state
+              },
+              icon: const Icon(Icons.stop),
+              label: const Text('End Event'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.bgDark,
+                foregroundColor: Colors.redAccent,
+              ),
+            ),
+          ] else if (isClientConnected) ...[
+            Text(
+              'Connected to Host at:',
+              style: TextStyle(color: AppTheme.textMuted),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              connectedHostIp,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                ref.read(clientHostIpProvider.notifier).setIp(null);
+              },
+              icon: const Icon(Icons.link_off),
+              label: const Text('Disconnect'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.bgDark,
+                foregroundColor: Colors.redAccent,
+              ),
+            ),
+          ] else ...[
+            ElevatedButton.icon(
+              onPressed: () async {
+                setState(() => _isLoading = true);
+                await server.startServer();
+                setState(() => _isLoading = false);
+              },
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Start Server & Act as Host'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.accentPurple,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Row(
+              children: [
+                Expanded(child: Divider(color: AppTheme.border)),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text('OR', style: TextStyle(color: AppTheme.textMuted, fontWeight: FontWeight.bold)),
+                ),
+                Expanded(child: Divider(color: AppTheme.border)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 200,
+                  child: TextField(
+                    controller: _clientIpController,
+                    decoration: const InputDecoration(
+                      hintText: 'Host IP (e.g. 192.168.1.5)',
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    final ip = _clientIpController.text.trim();
+                    if (ip.isNotEmpty) {
+                      ref.read(clientHostIpProvider.notifier).setIp(ip);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.bgCard,
+                  ),
+                  child: const Text('Connect as Client'),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -17,8 +17,11 @@ class LocalServerService {
   LocalServerService(this.ref);
 
   String? get ipAddress => _ipAddress;
+  bool get isRunning => _server != null;
 
   Future<void> startServer() async {
+    if (_server != null) return; // Already running
+    
     try {
       if (const bool.fromEnvironment('dart.library.html')) {
         _ipAddress = 'localhost (Web)';
@@ -111,8 +114,9 @@ class LocalServerService {
       final data = jsonDecode(payload);
       
       ref.read(sessionStateProvider.notifier).sendReaction(
-        data['emoji'] ?? '',
-        data['userId'] ?? 'audience',
+        data['user'] ?? 'audience',
+        data['value'] ?? '',
+        isEmoji: data['isEmoji'] ?? true,
       );
       
       return Response.ok('{"status":"ok"}', headers: {'Content-Type': 'application/json'});
@@ -155,6 +159,7 @@ class LocalServerService {
   Future<void> stopServer() async {
     if (_server != null) {
       await _server.close(force: true);
+      _server = null;
     }
   }
 }

@@ -52,3 +52,14 @@ final appStateProvider = NotifierProvider<AppStateNotifier, AppState>(() {
 
 // Deprecated: kept for backwards compatibility if needed elsewhere temporarily
 final appUserProvider = Provider<AppUser?>((ref) => ref.watch(appStateProvider).user);
+
+// For Native Client Mode: stores the IP address of the Host to connect to
+class ClientHostIpNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+  void setIp(String? ip) => state = ip;
+}
+
+final clientHostIpProvider = NotifierProvider<ClientHostIpNotifier, String?>(() {
+  return ClientHostIpNotifier();
+});

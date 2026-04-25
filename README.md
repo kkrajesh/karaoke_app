@@ -18,6 +18,17 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
   * **Audience:** Watches the currently playing song and sends live emoji reactions to the screen.
   * **Public Display:** A TV-optimized full-screen stage mode for the current singer, complete with a live-streaming chat overlay for audience reactions.
 
+## Roadmap
+* [ ] local library management
+    * [ ] file based library 
+    * [ ] mediamonkey integration
+* [ ] smule integration
+* [ ] queue management - reorder singer, remove singer, recall singer
+* [x] display logo, song title, singer name (Audience View)
+* [] AI to help prepare intro message for each singer and song (Teleprompter mockup built)
+* [] AI to help song trivia for current song (Teleprompter mockup built)
+
+
 ## Getting Started
 
 ### Prerequisites

@@ -6,41 +6,12 @@ import '../providers/session_state_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/gradient_text.dart';
 
-class HostDashboard extends ConsumerStatefulWidget {
+class HostDashboard extends ConsumerWidget {
   const HostDashboard({super.key});
 
   @override
-  ConsumerState<HostDashboard> createState() => _HostDashboardState();
-}
-
-class _HostDashboardState extends ConsumerState<HostDashboard> {
-  bool _isServerRunning = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _startServer();
-  }
-
-  Future<void> _startServer() async {
-    final server = ref.read(localServerProvider);
-    await server.startServer();
-    if (mounted) {
-      setState(() {
-        _isServerRunning = true;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    ref.read(localServerProvider).stopServer();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final server = ref.read(localServerProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final server = ref.watch(localServerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -58,25 +29,25 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _isServerRunning ? AppTheme.accentPurple.withOpacity(0.2) : AppTheme.bgInput,
+                  color: server.isRunning ? AppTheme.accentPurple.withOpacity(0.2) : AppTheme.bgInput,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _isServerRunning ? AppTheme.accentPurple : AppTheme.border),
+                  border: Border.all(color: server.isRunning ? AppTheme.accentPurple : AppTheme.border),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      _isServerRunning ? Icons.wifi : Icons.wifi_off,
+                      server.isRunning ? Icons.wifi : Icons.wifi_off,
                       size: 16,
-                      color: _isServerRunning ? AppTheme.accentPurpleLight : AppTheme.textMuted,
+                      color: server.isRunning ? AppTheme.accentPurpleLight : AppTheme.textMuted,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _isServerRunning 
+                      server.isRunning 
                         ? 'Connect Singers to: ${server.ipAddress}:8080'
-                        : 'Starting server...',
+                        : 'Server is offline. Start it on the Home Screen.',
                       style: TextStyle(
                         fontWeight: FontWeight.bold, 
-                        color: _isServerRunning ? AppTheme.accentPurpleLight : AppTheme.textMuted,
+                        color: server.isRunning ? AppTheme.accentPurpleLight : AppTheme.textMuted,
                       ),
                     ),
                   ],
@@ -92,16 +63,16 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 7, child: _buildLeftColumn()),
-                Expanded(flex: 5, child: _buildRightColumn()),
+                Expanded(flex: 7, child: _buildLeftColumn(ref)),
+                Expanded(flex: 5, child: _buildRightColumn(ref)),
               ],
             );
           } else {
             return SingleChildScrollView(
               child: Column(
                 children: [
-                  _buildLeftColumn(isMobile: true),
-                  _buildRightColumn(),
+                  _buildLeftColumn(ref, isMobile: true),
+                  _buildRightColumn(ref),
                 ],
               ),
             );
@@ -111,7 +82,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
     );
   }
 
-  Widget _buildLeftColumn({bool isMobile = false}) {
+  Widget _buildLeftColumn(WidgetRef ref, {bool isMobile = false}) {
     final nowPlaying = ref.watch(nowPlayingProvider);
     
     return SingleChildScrollView(
@@ -147,6 +118,8 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
               ),
             ),
           const SizedBox(height: 32),
+          _buildAiHostInfo(ref),
+          const SizedBox(height: 32),
           const Text('Song Requests', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.accentPink)),
           const SizedBox(height: 12),
           Container(
@@ -162,7 +135,60 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
     );
   }
 
-  Widget _buildRightColumn() {
+  Widget _buildAiHostInfo(WidgetRef ref) {
+    final sessionState = ref.watch(sessionStateProvider);
+    final funFact = sessionState.funFact;
+    
+    if (funFact == null) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppTheme.bgDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.accentPurple.withOpacity(0.5), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.accentPurple.withOpacity(0.2),
+            blurRadius: 10,
+            spreadRadius: 2,
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.auto_awesome, color: Colors.amber),
+              SizedBox(width: 8),
+              Text(
+                'Host Teleprompter',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.accentPurpleLight,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            funFact,
+            style: const TextStyle(
+              fontSize: 18,
+              height: 1.5,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRightColumn(WidgetRef ref) {
     final queue = ref.watch(queueProvider);
     
     return SingleChildScrollView(
