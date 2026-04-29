@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+scratch/
+build_web_output*.txt
+lib/test_mm*.dart
+android/build/

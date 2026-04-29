@@ -21,31 +21,33 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
   * **Public Display:** A TV-optimized full-screen stage mode for the current singer, complete with a live-streaming chat overlay for audience reactions.
 
 ## Roadmap
-* [x] local library management
-    * [x] file based library 
-    * [x] mediamonkey integration
-* [ ] smule integration
-* [ ] queue management - reorder singer, remove singer, recall singer
-* [x] display logo, song title, singer name (Audience View)
-* [] AI to help prepare intro message for each singer and song (Teleprompter mockup built)
-* [] AI to help song trivia for current song (Teleprompter mockup built)
-* [] Audience can select songs from library as a request (Host will review and add to queue). 
-    * [] Ability to nudge request to up or down the queue. 
-    * [] Ability to delete requests. 
-    * [] Ability to add a note to a request. 
-* [ ] Host should be able to add songs to the queue from library or YouTube or Smule for a specific singer
-* [ ] Ability to add songs to library or YouTube or Smule from the Queue
-* [ ] Host Controls - Push a count down timer/warning to the public display.
-* [ ] Host Controls - Push a message to the public display and audience display and chat.
-* [ ] Host Controls - Push a reminder message about where to find song requests and request songs.
-* [ ] Host Controls - Push messages about food and drinks, restrooms, etc on public display and audience display
-* [ ] Host Controls - Push messages about upcoming events, etc on public display and audience display
-* [ ] Public Display (TV) should have the option to display a queue of upcoming songs and singers, in between performances
-  * [ ] Public Display (TV) should have the option to display promotional messages/videos/slideshows in between performances
-* [ ] public display - play the karaoke video in a separate frame and have side/bottom areas for additional message. Somewhat like the host screen but optimized for TV with less controls and more real estate for the video and messages. The current build has a full screen mode for this, but it doesn't allow for any additional messages. This is needed to be able to display the youtube video on the TV and at the same time display messages, etc.
+* [x] Local library management
+    * [x] File based library 
+    * [x] MediaMonkey integration
+* [ ] Smule integration
+* [x] Queue management - reorder singer, remove singer, approve requests
+* [x] Display logo, song title, singer name (Audience View)
+* [x] AI Teleprompter to help prepare intro message for each singer and song
+* [x] AI to generate song trivia and fun facts for current song
+* [x] Audience can select songs from library as a request (Host will review and add to queue). 
+    * [x] Ability to nudge request to up or down the queue. 
+    * [x] Ability to delete requests. 
+    * [x] Ability to add a note to a request. 
+* [x] Host should be able to add songs to the queue from library or YouTube or Smule for a specific singer
+* [x] Ability to add songs to library or YouTube or Smule from the Queue
+* [x] Host Controls - Push a count down timer/warning to the public display.
+* [x] Host Controls - Push a message to the public display and audience display and chat.
+* [x] Host Controls - Push a reminder message about where to find song requests and request songs.
+* [x] Host Controls - Push messages about food and drinks, restrooms, etc on public display and audience display
+* [x] Host Controls - Push messages about upcoming events, etc on public display and audience display
+* [x] Public Display (TV) - display a queue of upcoming songs and singers, in between performances
+  * [x] Public Display (TV) - display promotional messages/videos/slideshows in between performances
+* [x] Public display - play the karaoke video in a separate frame and have side/bottom areas for additional message. Optimized for TV with real estate for the video, announcements, and up-next queue.
+* [x] Emoji Reactions Counting & Aggregation - display live counts of distinct emojis sent by audience.
+* [x] Windows Native Player Transitions - Deterministic `UniqueKey` synchronization to guarantee teardown and remount without relying on unreliable reactive listeners.
 * [ ] **Dynamic MediaMonkey DB Configuration**: Add a file-picker settings menu on the Host dashboard to select the `MM.DB` file path dynamically instead of hardcoding `C:\Data\Rajesh\Dev\data\MM.DB`.
-* [ ] **Windows Native Player Transitions**: Fix the reliability of dynamically transitioning `media_kit` between streams without needing the 600ms reset trick.
-
+* [ ] **Custom Emoji Support**: Allow users to upload or select custom emojis for the reaction pad.
+* [ ] **Post-Performance Word Clouds**: Aggregate text comments into a visual word cloud after each singer's performance.
 
 
 ## Getting Started

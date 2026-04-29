@@ -11,26 +11,40 @@ class SessionState {
   final List<Song> queue;
   final Song? nowPlaying;
   final List<Map<String, dynamic>> reactions;
+  final Map<String, int> emojiCounts;
   final String? funFact;
+  final String? announcement;
+  final int? countdownEndTime; // Unix timestamp in milliseconds
 
   SessionState({
     this.queue = const [],
     this.nowPlaying,
     this.reactions = const [],
+    this.emojiCounts = const {},
     this.funFact,
+    this.announcement,
+    this.countdownEndTime,
   });
 
   SessionState copyWith({
     List<Song>? queue,
     Song? nowPlaying,
     List<Map<String, dynamic>>? reactions,
+    Map<String, int>? emojiCounts,
     String? funFact,
+    String? announcement,
+    int? countdownEndTime,
+    bool clearAnnouncement = false,
+    bool clearCountdown = false,
   }) {
     return SessionState(
       queue: queue ?? this.queue,
       nowPlaying: nowPlaying ?? this.nowPlaying,
       reactions: reactions ?? this.reactions,
+      emojiCounts: emojiCounts ?? this.emojiCounts,
       funFact: funFact ?? this.funFact,
+      announcement: clearAnnouncement ? null : (announcement ?? this.announcement),
+      countdownEndTime: clearCountdown ? null : (countdownEndTime ?? this.countdownEndTime),
     );
   }
   
@@ -38,13 +52,19 @@ class SessionState {
     List<Song>? queue,
     Song? nowPlaying,
     bool clearNowPlaying = false,
+    bool clearReactions = false,
     String? funFact,
+    String? announcement,
+    int? countdownEndTime,
   }) {
     return SessionState(
       queue: queue ?? this.queue,
       nowPlaying: clearNowPlaying ? null : (nowPlaying ?? this.nowPlaying),
-      reactions: this.reactions,
+      reactions: clearReactions ? [] : this.reactions,
+      emojiCounts: clearReactions ? {} : this.emojiCounts,
       funFact: funFact ?? this.funFact,
+      announcement: announcement ?? this.announcement,
+      countdownEndTime: countdownEndTime ?? this.countdownEndTime,
     );
   }
 }
@@ -101,9 +121,25 @@ class SessionStateNotifier extends Notifier<SessionState> {
 
       final reactRes = await http.get(Uri.parse('$_baseUrl/reactions'));
       if (reactRes.statusCode == 200) {
-        final List<dynamic> rdata = jsonDecode(reactRes.body);
+        final Map<String, dynamic> responseData = jsonDecode(reactRes.body);
+        final List<dynamic> rdata = responseData['reactions'] ?? [];
+        final Map<String, dynamic> countsData = responseData['emojiCounts'] ?? {};
+        
         final reactions = rdata.map((r) => r as Map<String, dynamic>).toList();
-        state = state.copyWith(reactions: reactions);
+        final emojiCounts = countsData.map((k, v) => MapEntry(k, v as int));
+        
+        state = state.copyWith(reactions: reactions, emojiCounts: emojiCounts);
+      }
+
+      final displayRes = await http.get(Uri.parse('$_baseUrl/display-state'));
+      if (displayRes.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(displayRes.body);
+        state = state.copyWith(
+          announcement: data['announcement'],
+          clearAnnouncement: data['announcement'] == null,
+          countdownEndTime: data['countdownEndTime'],
+          clearCountdown: data['countdownEndTime'] == null,
+        );
       }
     } catch (e) {
       print('Network sync error: $e');
@@ -111,24 +147,75 @@ class SessionStateNotifier extends Notifier<SessionState> {
   }
 
   Future<void> addToQueue(Song song) async {
+    // Sort active queue by time, but keep pending requests at the very end
+    int _sortQueue(Song a, Song b) {
+      if (a.isRequest && !b.isRequest) return 1;
+      if (!a.isRequest && b.isRequest) return -1;
+      return a.addedAt.compareTo(b.addedAt);
+    }
+
     if (_isClient) {
       try {
-        await http.post(
+        http.post(
           Uri.parse('$_baseUrl/queue'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(song.toMap()),
         );
         // Will sync on next poll, but we can optimistically update
         state = state.copyWith(
-          queue: [...state.queue, song]..sort((a, b) => a.addedAt.compareTo(b.addedAt)),
+          queue: [...state.queue, song]..sort(_sortQueue),
         );
       } catch (e) {
         print('Error posting to queue: $e');
       }
     } else {
       state = state.copyWith(
-        queue: [...state.queue, song]..sort((a, b) => a.addedAt.compareTo(b.addedAt)),
+        queue: [...state.queue, song]..sort(_sortQueue),
       );
+    }
+  }
+
+  void approveRequest(String id, {String? assignedSinger}) {
+    int _sortQueue(Song a, Song b) {
+      if (a.isRequest && !b.isRequest) return 1;
+      if (!a.isRequest && b.isRequest) return -1;
+      return a.addedAt.compareTo(b.addedAt);
+    }
+
+    if (_isClient) {
+      if (assignedSinger != null) {
+        http.put(
+          Uri.parse('$_baseUrl/queue/$id/approve'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'assignedSinger': assignedSinger}),
+        );
+      } else {
+        http.put(Uri.parse('$_baseUrl/queue/$id/approve'));
+      }
+      return;
+    }
+
+    final idx = state.queue.indexWhere((s) => s.id == id);
+    if (idx != -1) {
+      final song = state.queue[idx];
+      final approvedSong = Song(
+        id: song.id,
+        title: song.title,
+        videoId: song.videoId,
+        isLocal: song.isLocal,
+        requestedBy: song.requestedBy,
+        requestedByName: assignedSinger ?? song.requestedByName,
+        addedAt: DateTime.now(), // Move to end of active queue
+        isRequest: false,
+        requestedFor: song.requestedFor,
+        dedication: song.dedication,
+      );
+      
+      final newQueue = List<Song>.from(state.queue);
+      newQueue[idx] = approvedSong;
+      
+      newQueue.sort(_sortQueue);
+      state = state.copyWith(queue: newQueue);
     }
   }
 
@@ -142,19 +229,25 @@ class SessionStateNotifier extends Notifier<SessionState> {
       return; // The state will update on the next poll
     }
 
-    if (state.queue.isEmpty) {
+    final activeQueue = state.queue.where((s) => !s.isRequest).toList();
+    final pendingRequests = state.queue.where((s) => s.isRequest).toList();
+
+    if (activeQueue.isEmpty) {
       state = state.copyWithNullableNowPlaying(clearNowPlaying: true, funFact: null);
       return;
     }
 
-    final nextSong = state.queue.first;
-    final remainingQueue = state.queue.sublist(1);
-    final upNext = remainingQueue.isNotEmpty ? remainingQueue.first : null;
+    final nextSong = activeQueue.first;
+    final remainingActive = activeQueue.sublist(1);
+    final upNext = remainingActive.isNotEmpty ? remainingActive.first : null;
+    
+    final newTotalQueue = [...remainingActive, ...pendingRequests];
 
     // First, clear the current song to force the player to unmount safely
     state = state.copyWithNullableNowPlaying(
-      queue: remainingQueue,
+      queue: newTotalQueue,
       clearNowPlaying: true,
+      clearReactions: true,
       funFact: 'Loading next singer...',
     );
 
@@ -164,6 +257,7 @@ class SessionStateNotifier extends Notifier<SessionState> {
     // Now push the new song
     state = state.copyWithNullableNowPlaying(
       nowPlaying: nextSong,
+      clearReactions: false,
       funFact: 'Generating AI Fact...',
     );
 
@@ -192,6 +286,94 @@ class SessionStateNotifier extends Notifier<SessionState> {
     );
   }
 
+  void nudgeRequest(String id, int direction) {
+    if (_isClient) return; // Only host
+    
+    int _sortQueue(Song a, Song b) {
+      if (a.isRequest && !b.isRequest) return 1;
+      if (!a.isRequest && b.isRequest) return -1;
+      return a.addedAt.compareTo(b.addedAt);
+    }
+
+    final requests = state.queue.where((s) => s.isRequest).toList();
+    final idx = requests.indexWhere((s) => s.id == id);
+    if (idx == -1) return;
+    
+    if (direction < 0 && idx > 0) {
+      // Swap addedAt with the one above it
+      final current = requests[idx];
+      final above = requests[idx - 1];
+      final tempTime = current.addedAt;
+      
+      final updatedCurrent = current.copyWith(addedAt: above.addedAt);
+      final updatedAbove = above.copyWith(addedAt: tempTime);
+      
+      final newQueue = List<Song>.from(state.queue);
+      newQueue[newQueue.indexWhere((s) => s.id == current.id)] = updatedCurrent;
+      newQueue[newQueue.indexWhere((s) => s.id == above.id)] = updatedAbove;
+      
+      state = state.copyWith(queue: newQueue..sort(_sortQueue));
+    } else if (direction > 0 && idx < requests.length - 1) {
+      // Swap addedAt with the one below it
+      final current = requests[idx];
+      final below = requests[idx + 1];
+      final tempTime = current.addedAt;
+      
+      final updatedCurrent = current.copyWith(addedAt: below.addedAt);
+      final updatedBelow = below.copyWith(addedAt: tempTime);
+      
+      final newQueue = List<Song>.from(state.queue);
+      newQueue[newQueue.indexWhere((s) => s.id == current.id)] = updatedCurrent;
+      newQueue[newQueue.indexWhere((s) => s.id == below.id)] = updatedBelow;
+      
+      state = state.copyWith(queue: newQueue..sort(_sortQueue));
+    }
+  }
+
+  void updateRequestNote(String id, String note) {
+    if (_isClient) return; // Only host
+    
+    final idx = state.queue.indexWhere((s) => s.id == id);
+    if (idx != -1) {
+      final newQueue = List<Song>.from(state.queue);
+      newQueue[idx] = newQueue[idx].copyWith(hostNote: note);
+      state = state.copyWith(queue: newQueue);
+    }
+  }
+
+  Future<void> pushAnnouncement(String? message) async {
+    if (_isClient) {
+      try {
+        await http.post(
+          Uri.parse('$_baseUrl/display-state/announcement'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'announcement': message}),
+        );
+      } catch (e) {
+        print('Error posting announcement: $e');
+      }
+    } else {
+      state = state.copyWith(announcement: message, clearAnnouncement: message == null);
+    }
+  }
+
+  Future<void> pushCountdown(int? seconds) async {
+    final endTime = seconds != null ? DateTime.now().millisecondsSinceEpoch + (seconds * 1000) : null;
+    if (_isClient) {
+      try {
+        await http.post(
+          Uri.parse('$_baseUrl/display-state/countdown'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'countdownEndTime': endTime}),
+        );
+      } catch (e) {
+        print('Error posting countdown: $e');
+      }
+    } else {
+      state = state.copyWith(countdownEndTime: endTime, clearCountdown: endTime == null);
+    }
+  }
+
   Future<void> sendReaction(String user, dynamic reactionValue, {bool isEmoji = true}) async {
     final reaction = {
       'user': user,
@@ -216,7 +398,17 @@ class SessionStateNotifier extends Notifier<SessionState> {
         updatedReactions = updatedReactions.sublist(updatedReactions.length - 20);
       }
       
-      state = state.copyWith(reactions: updatedReactions);
+      Map<String, int>? updatedCounts;
+      if (isEmoji) {
+        final key = reactionValue.toString();
+        updatedCounts = Map<String, int>.from(state.emojiCounts);
+        updatedCounts[key] = (updatedCounts[key] ?? 0) + 1;
+      }
+      
+      state = state.copyWith(
+        reactions: updatedReactions,
+        emojiCounts: updatedCounts,
+      );
     }
   }
 }

@@ -88,7 +88,7 @@ The native Windows/Android player uses `youtubeServiceProvider.getVideoStreamUrl
 
 **The Public Display Rule:** 
 Because of this, the "Stage TV" (where the lyrics actually play) should **always** be driven by the Native Windows/Android app. You open a *second instance* of the native app on the host laptop (or TV box), drag it to the TV HDMI output, and select the **Public Display** role. 
-The Public Display logic utilizes a brief 600ms `null` reset during queue transitions. This forces Flutter to safely unmount and destroy the underlying `media_kit` C++ hardware texture before building the next video player, preventing Direct3D access violations and crashes on Windows.
+The Public Display logic utilizes a brief 600ms `null` reset during queue transitions initiated by the host. To ensure 100% reliable synchronization across the network, the Public Display generates a deterministic "Identity String" (`videoId` + `addedAt`). If this identity changes, the UI synchronously forces a `UniqueKey` swap on the `PlayerScreen`. This guarantees Flutter safely unmounts and destroys the underlying `media_kit` C++ hardware texture before building the next video player, preventing Direct3D access violations and ensuring perfectly synced teardown/remount sequences without relying on flaky reactive listeners.
 
 ---
 

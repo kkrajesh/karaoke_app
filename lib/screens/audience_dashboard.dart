@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_theme.dart';
 import '../widgets/gradient_text.dart';
 import '../providers/session_state_provider.dart';
+import '../models/song.dart';
+import '../models/library_song.dart';
+import '../widgets/song_library.dart';
 
 class AudienceDashboard extends ConsumerStatefulWidget {
   const AudienceDashboard({super.key});
@@ -37,11 +40,81 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
                 _buildReactionsCard(),
                 const SizedBox(height: 16),
                 _buildNowPlaying(),
+                const SizedBox(height: 32),
+                const Text('Dedicate a Song', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight)),
+                const SizedBox(height: 8),
+                const Text('Request a song and dedicate it to a friend (or challenge them to sing it!)', style: TextStyle(color: AppTheme.textMuted)),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 500,
+                  child: SongLibrary(
+                    actionLabel: 'Request',
+                    onSongSelected: _requestSong,
+                  ),
+                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  void _requestSong(LibrarySong librarySong) {
+    final requestedForController = TextEditingController();
+    final dedicationController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Dedicate Song'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Requesting "${librarySong.title}"'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: requestedForController,
+                decoration: const InputDecoration(labelText: 'Who should sing it?', hintText: 'e.g., John, The Host, or "Anyone"'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: dedicationController,
+                decoration: const InputDecoration(labelText: 'Dedication Message', hintText: 'e.g., Happy Birthday!'),
+                maxLines: 2,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final queueSong = Song(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  title: librarySong.title,
+                  videoId: librarySong.videoId,
+                  isLocal: librarySong.source == 'local',
+                  requestedBy: 'audience',
+                  requestedByName: 'Audience Member',
+                  addedAt: DateTime.now(),
+                  isRequest: true,
+                  requestedFor: requestedForController.text.trim().isEmpty ? 'Anyone' : requestedForController.text.trim(),
+                  dedication: dedicationController.text.trim().isEmpty ? null : dedicationController.text.trim(),
+                );
+                ref.read(sessionStateProvider.notifier).addToQueue(queueSong);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Song request sent to Host!')));
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentPurple),
+              child: const Text('Send Request'),
+            ),
+          ],
+        );
+      },
     );
   }
 

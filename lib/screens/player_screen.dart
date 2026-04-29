@@ -9,11 +9,12 @@ import '../providers/app_state_provider.dart';
 
 import '../models/song.dart';
 import 'package:video_player/video_player.dart';
+import '../theme/app_theme.dart';
 
 class PlayerScreen extends ConsumerStatefulWidget {
-  final Song song;
+  final Song? song;
 
-  const PlayerScreen({super.key, required this.song});
+  const PlayerScreen({super.key, this.song});
 
   @override
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
@@ -25,25 +26,35 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   VideoPlayerController? _webLocalController;
   
   // Native Player (Windows/Android)
-  late final Player _nativePlayer;
-  late final VideoController _nativeController;
+  Player? _nativePlayer;
+  VideoController? _nativeController;
   bool _isLoadingNative = true;
   String? _nativeError;
 
   @override
   void initState() {
     super.initState();
+    print('[PlayerScreen] initState called for song: ${widget.song?.id}');
 
+    if (!kIsWeb) {
+      _nativePlayer = Player();
+      _nativeController = VideoController(_nativePlayer!);
+    }
+    
+    if (widget.song != null) {
+      _initSong(widget.song!);
+    }
+  }
+
+  void _initSong(Song newSong) {
     if (kIsWeb) {
-      if (widget.song.isLocal) {
-        _initWebLocalPlayer(widget.song.videoId);
+      if (newSong.isLocal) {
+        _initWebLocalPlayer(newSong.videoId);
       } else {
-        _initWebYtPlayer(widget.song.videoId);
+        _initWebYtPlayer(newSong.videoId);
       }
     } else {
-      _nativePlayer = Player();
-      _nativeController = VideoController(_nativePlayer);
-      _initNativePlayer(widget.song);
+      _initNativePlayer(newSong);
     }
   }
 
@@ -88,8 +99,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       }
       
       if (streamUrl != null && mounted) {
-        await _nativePlayer.open(Media(streamUrl), play: true);
-        _nativePlayer.play();
+        await _nativePlayer!.open(Media(streamUrl), play: true);
+        _nativePlayer!.play();
         setState(() {
           _isLoadingNative = false;
         });
@@ -106,36 +117,15 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     }
   }
 
-  @override
-  void didUpdateWidget(PlayerScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.song.id != widget.song.id) {
-      if (kIsWeb) {
-        if (widget.song.isLocal) {
-          _webYtController?.close();
-          _webYtController = null;
-          _initWebLocalPlayer(widget.song.videoId);
-        } else {
-          _webLocalController?.dispose();
-          _webLocalController = null;
-          if (_webYtController != null) {
-            _webYtController!.loadVideoById(videoId: widget.song.videoId);
-          } else {
-            _initWebYtPlayer(widget.song.videoId);
-          }
-        }
-      } else {
-        _initNativePlayer(widget.song);
-      }
-    }
-  }
+
 
   @override
   void dispose() {
+    print('[PlayerScreen] dispose called for song: ${widget.song?.id}');
     _webYtController?.close();
     _webLocalController?.dispose();
     if (!kIsWeb) {
-      _nativePlayer.dispose();
+      _nativePlayer?.dispose();
     }
     super.dispose();
   }
@@ -143,7 +133,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
-      if (widget.song.isLocal) {
+      if (widget.song == null) {
+        return Container(color: Colors.black);
+      }
+      
+      if (widget.song!.isLocal) {
         if (_webLocalController != null && _webLocalController!.value.isInitialized) {
           return Center(
             child: AspectRatio(
@@ -183,9 +177,23 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         aspectRatio: 16 / 9,
         child: Stack(
           children: [
-            Video(controller: _nativeController),
-            if (_isLoadingNative)
-              const Center(child: CircularProgressIndicator()),
+            if (_nativeController != null)
+              Video(controller: _nativeController!),
+            
+            if (_isLoadingNative || widget.song == null)
+              Container(
+                color: Colors.black,
+                child: Center(
+                  child: widget.song != null ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: AppTheme.accentPink),
+                      SizedBox(height: 16),
+                      Text('Loading next song...', style: TextStyle(color: AppTheme.textMuted)),
+                    ],
+                  ) : const SizedBox(),
+                ),
+              ),
           ],
         ),
       ),

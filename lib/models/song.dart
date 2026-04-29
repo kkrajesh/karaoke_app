@@ -6,6 +6,12 @@ class Song {
   final String requestedBy;
   final String requestedByName;
   final DateTime addedAt;
+  
+  // Audience Request Fields
+  final bool isRequest;
+  final String? requestedFor;
+  final String? dedication;
+  final String? hostNote;
 
   Song({
     required this.id,
@@ -15,6 +21,10 @@ class Song {
     required this.requestedBy,
     required this.requestedByName,
     required this.addedAt,
+    this.isRequest = false,
+    this.requestedFor,
+    this.dedication,
+    this.hostNote,
   });
 
   factory Song.fromMap(Map<String, dynamic> map, String documentId) {
@@ -28,6 +38,10 @@ class Song {
       addedAt: map['addedAt'] != null 
           ? DateTime.fromMillisecondsSinceEpoch(map['addedAt']) 
           : DateTime.now(),
+      isRequest: map['isRequest'] ?? false,
+      requestedFor: map['requestedFor'],
+      dedication: map['dedication'],
+      hostNote: map['hostNote'],
     );
   }
 
@@ -39,6 +53,38 @@ class Song {
       'requestedBy': requestedBy,
       'requestedByName': requestedByName,
       'addedAt': addedAt.millisecondsSinceEpoch,
+      'isRequest': isRequest,
+      if (requestedFor != null) 'requestedFor': requestedFor,
+      if (dedication != null) 'dedication': dedication,
+      if (hostNote != null) 'hostNote': hostNote,
     };
+  }
+
+  Song copyWith({
+    String? id,
+    String? title,
+    String? videoId,
+    bool? isLocal,
+    String? requestedBy,
+    String? requestedByName,
+    DateTime? addedAt,
+    bool? isRequest,
+    String? requestedFor,
+    String? dedication,
+    String? hostNote,
+  }) {
+    return Song(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      videoId: videoId ?? this.videoId,
+      isLocal: isLocal ?? this.isLocal,
+      requestedBy: requestedBy ?? this.requestedBy,
+      requestedByName: requestedByName ?? this.requestedByName,
+      addedAt: addedAt ?? this.addedAt,
+      isRequest: isRequest ?? this.isRequest,
+      requestedFor: requestedFor ?? this.requestedFor,
+      dedication: dedication ?? this.dedication,
+      hostNote: hostNote ?? this.hostNote,
+    );
   }
 }

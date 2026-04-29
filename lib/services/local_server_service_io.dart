@@ -80,6 +80,22 @@ class LocalServerService {
       return Response.ok('{"status":"ok"}', headers: {'Content-Type': 'application/json'});
     });
 
+    // PUT /queue/<id>/approve
+    app.put('/queue/<id>/approve', (Request request, String id) async {
+      String? assignedSinger;
+      try {
+        final payload = await request.readAsString();
+        if (payload.isNotEmpty) {
+          final data = jsonDecode(payload);
+          assignedSinger = data['assignedSinger'];
+        }
+      } catch (e) {
+        // ignore JSON parse errors if body is empty
+      }
+      ref.read(sessionStateProvider.notifier).approveRequest(id, assignedSinger: assignedSinger);
+      return Response.ok('{"status":"ok"}', headers: {'Content-Type': 'application/json'});
+    });
+
     // GET /search?q=xyz
     app.get('/search', (Request request) async {
       final query = request.url.queryParameters['q'];
@@ -99,15 +115,19 @@ class LocalServerService {
 
     // GET /reactions
     app.get('/reactions', (Request request) {
-      final reactions = ref.read(sessionStateProvider).reactions;
-      // Convert timestamps to ISO string if needed, or assume they serialize
-      final formattedReactions = reactions.map((r) => {
+      final state = ref.read(sessionStateProvider);
+      final formattedReactions = state.reactions.map((r) => {
         ...r,
         'timestamp': r['timestamp'] is DateTime 
             ? (r['timestamp'] as DateTime).toIso8601String() 
             : r['timestamp'],
       }).toList();
-      return Response.ok(jsonEncode(formattedReactions), headers: {'Content-Type': 'application/json'});
+      
+      final responseBody = {
+        'reactions': formattedReactions,
+        'emojiCounts': state.emojiCounts,
+      };
+      return Response.ok(jsonEncode(responseBody), headers: {'Content-Type': 'application/json'});
     });
 
     // POST /reactions
@@ -121,6 +141,38 @@ class LocalServerService {
         isEmoji: data['isEmoji'] ?? true,
       );
       
+      return Response.ok('{"status":"ok"}', headers: {'Content-Type': 'application/json'});
+    });
+
+    // GET /display-state
+    app.get('/display-state', (Request request) {
+      final state = ref.read(sessionStateProvider);
+      final responseBody = {
+        'announcement': state.announcement,
+        'countdownEndTime': state.countdownEndTime,
+      };
+      return Response.ok(jsonEncode(responseBody), headers: {'Content-Type': 'application/json'});
+    });
+
+    // POST /display-state/announcement
+    app.post('/display-state/announcement', (Request request) async {
+      final payload = await request.readAsString();
+      final data = jsonDecode(payload);
+      ref.read(sessionStateProvider.notifier).pushAnnouncement(data['announcement']);
+      return Response.ok('{"status":"ok"}', headers: {'Content-Type': 'application/json'});
+    });
+
+    // POST /display-state/countdown
+    app.post('/display-state/countdown', (Request request) async {
+      final payload = await request.readAsString();
+      final data = jsonDecode(payload);
+      
+      final endTimeMs = data['countdownEndTime'] as int?;
+      // Note: We're setting the end time directly via state rather than pushCountdown which calculates it
+      ref.read(sessionStateProvider.notifier).state = ref.read(sessionStateProvider.notifier).state.copyWith(
+        countdownEndTime: endTimeMs,
+        clearCountdown: endTimeMs == null,
+      );
       return Response.ok('{"status":"ok"}', headers: {'Content-Type': 'application/json'});
     });
 
