@@ -77,7 +77,7 @@ class _PublicDisplayScreenState extends ConsumerState<PublicDisplayScreen> {
                         clipBehavior: Clip.antiAlias,
                         child: Stack(
                           children: [
-                            // 1. Permanently mounted PlayerScreen to prevent AXTree crashes
+                            // 1. PlayerScreen wrapped with dynamic key for forced refresh
                             Positioned.fill(
                               child: PlayerScreen(
                                 key: activePlayerKey,

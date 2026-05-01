@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/song.dart';
 import '../providers/app_state_provider.dart';
 import '../services/ai_service.dart';
+import '../services/google_sheets_service.dart';
 
 class SessionState {
   final List<Song> queue;
@@ -71,6 +72,7 @@ class SessionState {
 
 class SessionStateNotifier extends Notifier<SessionState> {
   Timer? _pollTimer;
+  Timer? _sheetsSyncTimer;
 
   bool get _isClient => kIsWeb || ref.read(clientHostIpProvider) != null;
   String get _baseUrl {
@@ -90,6 +92,7 @@ class SessionStateNotifier extends Notifier<SessionState> {
     
     ref.onDispose(() {
       _pollTimer?.cancel();
+      _sheetsSyncTimer?.cancel();
     });
     
     return SessionState();
@@ -233,6 +236,10 @@ class SessionStateNotifier extends Notifier<SessionState> {
     final pendingRequests = state.queue.where((s) => s.isRequest).toList();
 
     if (activeQueue.isEmpty) {
+      if (state.nowPlaying != null) {
+        ref.read(googleSheetsServiceProvider).logPerformance(state.nowPlaying!, state.emojiCounts);
+      }
+      _sheetsSyncTimer?.cancel();
       state = state.copyWithNullableNowPlaying(clearNowPlaying: true, funFact: null);
       return;
     }
@@ -242,6 +249,12 @@ class SessionStateNotifier extends Notifier<SessionState> {
     final upNext = remainingActive.isNotEmpty ? remainingActive.first : null;
     
     final newTotalQueue = [...remainingActive, ...pendingRequests];
+
+    if (state.nowPlaying != null) {
+      ref.read(googleSheetsServiceProvider).logPerformance(state.nowPlaying!, state.emojiCounts);
+    }
+    
+    _sheetsSyncTimer?.cancel();
 
     // First, clear the current song to force the player to unmount safely
     state = state.copyWithNullableNowPlaying(
@@ -260,6 +273,24 @@ class SessionStateNotifier extends Notifier<SessionState> {
       clearReactions: false,
       funFact: 'Generating AI Fact...',
     );
+
+    // Log the start of the performance
+    ref.read(googleSheetsServiceProvider).logPerformance(nextSong, state.emojiCounts);
+
+    // Start a background timer to update the sheet periodically for up to 10 minutes
+    // This catches reactions if the video finishes naturally and the host doesn't click "Start Next"
+    if (!_isClient) {
+      int ticks = 0;
+      _sheetsSyncTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+        ticks++;
+        if (state.nowPlaying != null && state.nowPlaying!.id == nextSong.id) {
+          ref.read(googleSheetsServiceProvider).logPerformance(state.nowPlaying!, state.emojiCounts);
+        }
+        if (ticks >= 10 || state.nowPlaying?.id != nextSong.id) {
+          timer.cancel();
+        }
+      });
+    }
 
     // Fetch the fun fact asynchronously
     final aiService = ref.read(aiServiceProvider);

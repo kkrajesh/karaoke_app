@@ -46,6 +46,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     }
   }
 
+
+
+
+
   void _initSong(Song newSong) {
     if (kIsWeb) {
       if (newSong.isLocal) {
@@ -91,8 +95,8 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
       String? streamUrl;
       
       if (song.isLocal) {
-        // For native, we can just play the file path directly from disk
-        streamUrl = 'file:///' + song.videoId.replaceAll('\\\\', '/');
+        // Convert backslashes to forward slashes for libmpv, avoiding percent-encoding issues
+        streamUrl = song.videoId.replaceAll('\\', '/');
       } else {
         final ytService = ref.read(youtubeServiceProvider);
         streamUrl = await ytService.getVideoStreamUrl(song.videoId);
@@ -125,7 +129,11 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     _webYtController?.close();
     _webLocalController?.dispose();
     if (!kIsWeb) {
-      _nativePlayer?.dispose();
+      // Async dispose to prevent texture access violation crashes when unmounting
+      final playerToDispose = _nativePlayer;
+      Future.delayed(const Duration(milliseconds: 500), () {
+        playerToDispose?.dispose();
+      });
     }
     super.dispose();
   }
