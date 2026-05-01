@@ -6,9 +6,11 @@ import '../providers/session_state_provider.dart';
 import '../providers/app_state_provider.dart';
 import '../models/song.dart';
 import '../models/library_song.dart';
+import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/gradient_text.dart';
 import '../widgets/song_library.dart';
+import '../providers/settings_provider.dart';
 
 class HostDashboard extends ConsumerStatefulWidget {
   const HostDashboard({super.key});
@@ -268,6 +270,51 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // App Settings
+          Container(
+            decoration: BoxDecoration(color: AppTheme.bgCard, borderRadius: BorderRadius.circular(8)),
+            child: ExpansionTile(
+              title: const Text('App Settings & Integrations', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final settings = ref.watch(settingsProvider);
+                      final eventNameCtrl = TextEditingController(text: settings.eventName);
+                      final webhookCtrl = TextEditingController(text: settings.googleSheetsWebhookUrl);
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Event Name', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: eventNameCtrl,
+                            decoration: const InputDecoration(hintText: 'e.g. Friday Night Karaoke'),
+                            onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings(eventName: val),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text('Google Sheets Webhook URL', style: TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: webhookCtrl,
+                            decoration: const InputDecoration(hintText: 'https://script.google.com/...'),
+                            onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings(googleSheetsWebhookUrl: val),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text('Used for automated performance logging.', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],

@@ -13,6 +13,7 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
 * **Local Network API:** Queue management, current playing status, live audience reactions, and YouTube search proxying are all handled by the local server over HTTP.
 * **CORS Proxy:** Built-in proxy using `youtube_explode_dart` allows web clients to search YouTube directly through the host, avoiding browser CORS blocks.
 * **Local MediaMonkey DB Integration:** Direct integration with MediaMonkey SQLite databases (`MM.DB`) allows searching and playing locally stored MP4/Opus/MKV files directly from the hard drive, seamlessly merged with YouTube results.
+* **Automated Performance Logging:** Integrates with Google Sheets to automatically push performance logs (singer name, song title, URL, source, and emoji reaction aggregations) via a Webhook URL configured in the Host settings.
 * **Android Client Support:** Compiles into a standalone Android APK, so dedicated tablets can connect to the host without relying on web browser video limitations.
 * **Roles:**
   * **Host:** Manages the queue, plays the next song, manages the library, and controls the room.
@@ -45,7 +46,8 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
 * [x] Public display - play the karaoke video in a separate frame and have side/bottom areas for additional message. Optimized for TV with real estate for the video, announcements, and up-next queue.
 * [x] Emoji Reactions Counting & Aggregation - display live counts of distinct emojis sent by audience.
 * [x] Windows Native Player Transitions - Deterministic `UniqueKey` synchronization to guarantee teardown and remount without relying on unreliable reactive listeners.
-* [ ] **Dynamic MediaMonkey DB Configuration**: Add a file-picker settings menu on the Host dashboard to select the `MM.DB` file path dynamically instead of hardcoding `C:\Data\Rajesh\Dev\data\MM.DB`.
+* [x] **Automated Google Sheets Logging**: Upsert performance metadata and audience reaction aggregations via Webhook.
+* [x] **Dynamic App Settings UI**: Add a settings menu on the Host dashboard to select the `MM.DB` file path dynamically and configure Google Sheets integrations.
 * [ ] **Custom Emoji Support**: Allow users to upload or select custom emojis for the reaction pad.
 * [ ] **Post-Performance Word Clouds**: Aggregate text comments into a visual word cloud after each singer's performance.
 

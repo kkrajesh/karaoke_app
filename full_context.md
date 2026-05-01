@@ -88,7 +88,7 @@ The native Windows/Android player uses `youtubeServiceProvider.getVideoStreamUrl
 
 **The Public Display Rule:** 
 Because of this, the "Stage TV" (where the lyrics actually play) should **always** be driven by the Native Windows/Android app. You open a *second instance* of the native app on the host laptop (or TV box), drag it to the TV HDMI output, and select the **Public Display** role. 
-The Public Display logic utilizes a brief 600ms `null` reset during queue transitions initiated by the host. To ensure 100% reliable synchronization across the network, the Public Display generates a deterministic "Identity String" (`videoId` + `addedAt`). If this identity changes, the UI synchronously forces a `UniqueKey` swap on the `PlayerScreen`. This guarantees Flutter safely unmounts and destroys the underlying `media_kit` C++ hardware texture before building the next video player, preventing Direct3D access violations and ensuring perfectly synced teardown/remount sequences without relying on flaky reactive listeners.
+The Public Display logic utilizes a brief 600ms `null` reset during queue transitions initiated by the host. To ensure perfectly reliable video transitions and prevent native Windows `media_kit` crashes, the Public Display uses a deterministic `UniqueKey` swap combined with an asynchronous `Player.dispose()` delay. This guarantees Flutter safely tears down the underlying Direct3D hardware texture and builds a fresh player for the new song without race conditions. Additionally, local disk paths are dynamically stripped of backslashes (`\`) and converted to forward slashes (`/`) so the `libmpv` C++ backend can successfully parse them without escape-character corruption.
 
 ---
 
@@ -101,3 +101,11 @@ If you make *any* changes to the UI, logic, or dependencies of the Flutter appli
 2. Run `flutter build web` to compile the JS/Wasm bundles into the `build/web` directory.
 3. Run `flutter run -d windows` (or build a release `.exe`) to start the host. Wait for the shelf server to boot up.
 4. Clients connecting via IP will now receive the newly compiled application.
+
+---
+
+## 8. App Settings & Performance Logging
+
+The application uses `SharedPreferences` to persist Host configuration via `SettingsNotifier`. This avoids hardcoding paths and secrets into the source code, allowing the host to dynamically configure the system from the dashboard.
+* **Google Sheets Webhook:** An integration (`GoogleSheetsService`) that automatically pushes structured JSON payloads containing the song title, singer, URL, source type, and an aggregated count of audience emoji reactions (e.g., `🔥x5, 👏x3`) when a song finishes or the Host presses "Start Next Singer".
+* **MediaMonkey DB Path:** The path to the local SQLite database used for querying and streaming file-based karaoke tracks.
