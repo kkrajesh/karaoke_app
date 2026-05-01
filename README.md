@@ -48,8 +48,10 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
 * [x] Windows Native Player Transitions - Deterministic `UniqueKey` synchronization to guarantee teardown and remount without relying on unreliable reactive listeners.
 * [x] **Automated Google Sheets Logging**: Upsert performance metadata and audience reaction aggregations via Webhook.
 * [x] **Dynamic App Settings UI**: Add a settings menu on the Host dashboard to select the `MM.DB` file path dynamically and configure Google Sheets integrations.
+* [x] **Host Dashboard Redesign**: Fully responsive 3-column single-page layout featuring fullscreen expandable cards and live reaction overlays on the video player.
 * [ ] **Custom Emoji Support**: Allow users to upload or select custom emojis for the reaction pad.
 * [ ] **Post-Performance Word Clouds**: Aggregate text comments into a visual word cloud after each singer's performance.
+* [ ] **Google Sheets YouTube Links**: When adding the youtube songs to the google sheet, prefix it with 'https://www.youtube.com/watch?v=' to make it a ready to access youtble link.
 
 
 ## Getting Started

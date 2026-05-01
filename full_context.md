@@ -109,3 +109,12 @@ If you make *any* changes to the UI, logic, or dependencies of the Flutter appli
 The application uses `SharedPreferences` to persist Host configuration via `SettingsNotifier`. This avoids hardcoding paths and secrets into the source code, allowing the host to dynamically configure the system from the dashboard.
 * **Google Sheets Webhook:** An integration (`GoogleSheetsService`) that automatically pushes structured JSON payloads containing the song title, singer, URL, source type, and an aggregated count of audience emoji reactions (e.g., `🔥x5, 👏x3`) when a song finishes or the Host presses "Start Next Singer".
 * **MediaMonkey DB Path:** The path to the local SQLite database used for querying and streaming file-based karaoke tracks.
+
+---
+
+## 9. User Interface & Responsive Layout
+
+The **Host Dashboard** is designed to act as a centralized control room, specifically optimized for desktop or tablet screens. 
+* **Responsive Layout:** On larger screens, the dashboard transitions into a 3-column single-page layout that eliminates the need for vertical page scrolling. Lists like the Queue and Song Library internally scroll within fixed flex constraints.
+* **Expandable Cards:** Because screen real estate is critical, almost all sections (Singer Queue, Song Requests, Song Library, Settings, etc.) feature an "Expand" button in their headers. Clicking this opens a large, responsive modal overlay using Riverpod `Consumer` widgets to remain perfectly in sync with live data while providing maximum working area.
+* **Live Reaction Overlays:** Rather than taking up sidebar space, audience emojis and text reactions overlay beautifully on top of the "Now Playing" video player. Text reactions dynamically overlap like a hand of playing cards to conserve horizontal space.
