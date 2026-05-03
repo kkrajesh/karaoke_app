@@ -51,7 +51,7 @@ The Host boots up a background `shelf` server upon startup in `HostDashboard`. I
 * `GET /reactions`: Returns the latest 20 audience emoji/comment reactions.
 * `POST /reactions`: Posts a new reaction.
 * `GET /display-state`: Returns the current event name, announcement, and countdown timer.
-* `POST /display-state/announcement` & `POST /display-state/countdown`: Allows the Host to push state to the public and audience displays.
+* `POST /display-state/announcement` & `POST /display-state/countdown`: Allows the Host to push state to the public and audience displays. The countdown timer includes an automatic 30-second native cleanup mechanism within `SessionStateNotifier` that resets the clock and clears the message across all connected screens globally.
 * `GET /search?q=...`: Proxies a YouTube search or queries the local `MM.DB`. The Host's native instances fetch the data and return the JSON payload, circumventing browser CORS issues and avoiding exposing the local database directly.
 * `GET /local-media?path=...`: Streams a physical media file (e.g., `.mp4`, `.mkv`) from the host's hard drive to web clients using `dart:io` chunked streaming.
 
@@ -122,3 +122,14 @@ The **Host Dashboard** is designed to act as a centralized control room, specifi
 * **Dynamic Event Branding:** The Event Name is configured in the Host's `SharedPreferences` and broadcast via the `/display-state` API endpoint so all remote web clients dynamically update their AppBar titles to match the event.
 * **Expandable Cards:** Because screen real estate is critical, almost all sections (Singer Queue, Song Requests, Song Library, Settings, etc.) feature an "Expand" button in their headers. Clicking this opens a large, responsive modal overlay using Riverpod `Consumer` widgets to remain perfectly in sync with live data while providing maximum working area.
 * **Live Reaction Overlays:** Rather than taking up sidebar space, audience emojis and text reactions overlay beautifully on top of the "Now Playing" video player. Text reactions dynamically overlap like a hand of playing cards to conserve horizontal space.
+* **Compact Previews & URL Launching:** The Song Library implements compact popup modals for song previews with the ability to instantly expand to fullscreen. Additionally, leveraging `url_launcher`, hosts can seamlessly punt non-local streams (like YouTube or Smule URLs) directly into their native desktop web browser for advanced interaction outside of the Flutter application.
+
+---
+
+## 10. Smule Integration Status & Future Roadmap
+
+The application has foundational components prepared for integrating Smule performances (e.g. `SmuleService`, `GoogleSheetsService` URL logging, and `.mp4` stream resolution in `PlayerScreen`). However, active UI elements for Smule searching have been temporarily disabled.
+
+**The Blocker:** Smule has implemented aggressive Cloudflare Bot Management across their entire domain. Any standard HTTP requests (including `http.get` in Dart or raw `curl` commands) are immediately intercepted by a Cloudflare Javascript challenge (`window.__CF$cv$params`), completely blocking the scraper from extracting search results or media stream tags.
+
+**Future Implementation (Option 3):** When the decision is made to re-activate Smule, the standard HTTP proxy endpoints in `LocalServerService` must be replaced with a headless browser approach. This will require running a background Chrome instance (e.g. using a Node.js `puppeteer-extra-plugin-stealth` script or Python `undetected-chromedriver` proxy) alongside the Dart server to seamlessly solve the JS challenges, scrape the DOM, and pass the pristine `.mp4` URLs back to the Flutter frontend.

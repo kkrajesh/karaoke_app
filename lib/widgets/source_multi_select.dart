@@ -12,7 +12,7 @@ class SourceMultiSelect extends ConsumerStatefulWidget {
 }
 
 class _SourceMultiSelectState extends ConsumerState<SourceMultiSelect> {
-  final List<String> _allSources = ['YouTube', 'MediaMonkey', 'Smule'];
+  final List<String> _allSources = ['YouTube', 'MediaMonkey'];
 
   @override
   void initState() {

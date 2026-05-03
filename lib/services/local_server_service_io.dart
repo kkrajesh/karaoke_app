@@ -10,6 +10,7 @@ import '../providers/session_state_provider.dart';
 import '../services/media_monkey_service.dart';
 import '../models/song.dart';
 import 'youtube_service.dart';
+import 'smule_service.dart';
 import '../providers/settings_provider.dart';
 
 class LocalServerService {
@@ -194,11 +195,8 @@ class LocalServerService {
       final data = jsonDecode(payload);
       
       final endTimeMs = data['countdownEndTime'] as int?;
-      // Note: We're setting the end time directly via state rather than pushCountdown which calculates it
-      ref.read(sessionStateProvider.notifier).state = ref.read(sessionStateProvider.notifier).state.copyWith(
-        countdownEndTime: endTimeMs,
-        clearCountdown: endTimeMs == null,
-      );
+      // Note: We're setting the end time directly via the native method
+      ref.read(sessionStateProvider.notifier).setCountdownNatively(endTimeMs);
       return Response.ok('{"status":"ok"}', headers: {'Content-Type': 'application/json'});
     });
 
@@ -241,6 +239,28 @@ class LocalServerService {
       
       final jsonList = results.map((song) => song.toMap()).toList();
       return Response.ok(jsonEncode(jsonList), headers: {'Content-Type': 'application/json'});
+    });
+
+    app.get('/smule-search', (Request request) async {
+      final query = request.url.queryParameters['q'];
+      if (query == null) return Response.badRequest(body: 'Missing query parameter "q"');
+      
+      final smuleService = ref.read(smuleServiceProvider);
+      final results = await smuleService.searchPerformances(query, isProxy: true);
+      
+      final jsonList = results.map((song) => song.toMap()).toList();
+      return Response.ok(jsonEncode(jsonList), headers: {'Content-Type': 'application/json'});
+    });
+
+    app.get('/smule-media', (Request request) async {
+      final url = request.url.queryParameters['url'];
+      if (url == null) return Response.badRequest(body: 'Missing url parameter');
+      
+      final smuleService = ref.read(smuleServiceProvider);
+      final mediaUrl = await smuleService.getMediaUrl(url, isProxy: true);
+      
+      if (mediaUrl == null) return Response.notFound('Media not found');
+      return Response.ok(jsonEncode({'url': mediaUrl}), headers: {'Content-Type': 'application/json'});
     });
 
     // Simple CORS middleware

@@ -25,7 +25,7 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
 * [x] Local library management
     * [x] File based library 
     * [x] MediaMonkey integration
-* [ ] Smule integration
+* [ ] Smule integration (Temporarily blocked by Cloudflare, pending headless browser scraper)
 * [x] Queue management - reorder singer, remove singer, approve requests
 * [x] Display logo, song title, singer name (Audience View)
 * [x] AI Teleprompter to help prepare intro message for each singer and song
@@ -53,6 +53,8 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
 * [ ] **Custom Emoji Support**: Allow users to upload or select custom emojis for the reaction pad.
 * [ ] **Post-Performance Word Clouds**: Aggregate text comments into a visual word cloud after each singer's performance.
 * [x] **Google Sheets YouTube Links**: When adding the youtube songs to the google sheet, prefix it with 'https://www.youtube.com/watch?v=' to make it a ready to access youtube link.
+* [x] **Song Library Previews**: Songs now preview in a compact modal with options to expand to fullscreen or launch directly in the host's native web browser.
+* [x] **Host Timer Controls**: 1, 3, 5, and Custom minute countdown timers can be pushed to all displays alongside a custom text message, with an automatic 30-second cleanup.
 
 
 ## Getting Started

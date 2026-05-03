@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../models/song.dart';
 import '../models/library_song.dart';
@@ -32,15 +33,16 @@ class _SongLibraryState extends ConsumerState<SongLibrary> {
     super.dispose();
   }
 
-  void _previewSong(LibrarySong librarySong) {
+  void _previewSong(LibrarySong librarySong, {bool fullscreen = false}) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.black,
           contentPadding: EdgeInsets.zero,
-          content: AspectRatio(
-            aspectRatio: 16 / 9,
+          content: SizedBox(
+            width: fullscreen ? MediaQuery.of(context).size.width * 0.9 : 400,
+            height: fullscreen ? MediaQuery.of(context).size.height * 0.9 : 225,
             child: PlayerScreen(
               song: Song(
                 id: 'preview',
@@ -54,6 +56,24 @@ class _SongLibraryState extends ConsumerState<SongLibrary> {
             ),
           ),
           actions: [
+            if (!fullscreen)
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _previewSong(librarySong, fullscreen: true);
+                },
+                child: const Text('Expand', style: TextStyle(color: AppTheme.accentBlue)),
+              ),
+            if (librarySong.source != 'local')
+              TextButton(
+                onPressed: () {
+                  final url = librarySong.source == 'youtube' 
+                      ? 'https://www.youtube.com/watch?v=${librarySong.videoId}'
+                      : librarySong.videoId;
+                  launchUrl(Uri.parse(url));
+                },
+                child: const Text('Open in Browser', style: TextStyle(color: Colors.white)),
+              ),
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Close', style: TextStyle(color: AppTheme.accentPurpleLight)),

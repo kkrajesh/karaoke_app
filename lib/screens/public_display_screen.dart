@@ -406,7 +406,7 @@ class _PublicDisplayScreenState extends ConsumerState<PublicDisplayScreen> {
 
   Widget _buildBottomAnnouncementBar(SessionState state) {
     if (state.countdownEndTime != null) {
-      return _CountdownDisplay(endTimeMs: state.countdownEndTime!);
+      return _CountdownDisplay(endTimeMs: state.countdownEndTime!, message: state.announcement);
     }
     
     if (state.announcement != null && state.announcement!.isNotEmpty) {
@@ -431,7 +431,8 @@ class _PublicDisplayScreenState extends ConsumerState<PublicDisplayScreen> {
 
 class _CountdownDisplay extends StatefulWidget {
   final int endTimeMs;
-  const _CountdownDisplay({required this.endTimeMs});
+  final String? message;
+  const _CountdownDisplay({required this.endTimeMs, this.message});
 
   @override
   State<_CountdownDisplay> createState() => _CountdownDisplayState();
@@ -496,9 +497,9 @@ class _CountdownDisplayState extends State<_CountdownDisplay> {
             style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.amber, fontFeatures: [FontFeature.tabularFigures()]),
           ),
           const SizedBox(width: 24),
-          const Text(
-            'UNTIL SHOWTIME',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textMuted),
+          Text(
+            widget.message != null && widget.message!.isNotEmpty ? widget.message! : 'UNTIL SHOWTIME',
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textMuted),
           ),
         ],
       ),

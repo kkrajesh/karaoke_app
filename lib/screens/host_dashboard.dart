@@ -25,10 +25,12 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
   int _lastRequestLength = 0;
 
   final TextEditingController _announcementController = TextEditingController();
+  final TextEditingController _timerMessageController = TextEditingController(text: 'Starting shortly!');
 
   @override
   void dispose() {
     _announcementController.dispose();
+    _timerMessageController.dispose();
     super.dispose();
   }
 
@@ -953,6 +955,14 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
           ),
           const Divider(color: AppTheme.border, height: 32),
           const Text('Countdown Timer', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _timerMessageController,
+            decoration: const InputDecoration(
+              hintText: 'Custom message',
+              isDense: true,
+            ),
+          ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -960,24 +970,87 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
             children: [
               ElevatedButton.icon(
                 icon: const Icon(Icons.timer, size: 16),
-                label: const Text('5 Min'),
-                onPressed: () => ref.read(sessionStateProvider.notifier).pushCountdown(300),
+                label: const Text('1 Min'),
+                onPressed: () {
+                  ref.read(sessionStateProvider.notifier).pushCountdown(60);
+                  ref.read(sessionStateProvider.notifier).pushAnnouncement(_timerMessageController.text.trim());
+                },
               ),
               ElevatedButton.icon(
                 icon: const Icon(Icons.timer, size: 16),
-                label: const Text('15 Min'),
-                onPressed: () => ref.read(sessionStateProvider.notifier).pushCountdown(900),
+                label: const Text('3 Min'),
+                onPressed: () {
+                  ref.read(sessionStateProvider.notifier).pushCountdown(180);
+                  ref.read(sessionStateProvider.notifier).pushAnnouncement(_timerMessageController.text.trim());
+                },
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.timer, size: 16),
+                label: const Text('5 Min'),
+                onPressed: () {
+                  ref.read(sessionStateProvider.notifier).pushCountdown(300);
+                  ref.read(sessionStateProvider.notifier).pushAnnouncement(_timerMessageController.text.trim());
+                },
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.timer_outlined, size: 16),
+                label: const Text('Custom'),
+                onPressed: () => _showCustomTimerDialog(ref),
               ),
               ElevatedButton.icon(
                 icon: const Icon(Icons.stop, size: 16),
                 label: const Text('Clear'),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent.withOpacity(0.2)),
-                onPressed: () => ref.read(sessionStateProvider.notifier).pushCountdown(null),
+                onPressed: () {
+                  ref.read(sessionStateProvider.notifier).pushCountdown(null);
+                  ref.read(sessionStateProvider.notifier).pushAnnouncement(null);
+                },
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  void _showCustomTimerDialog(WidgetRef ref) {
+    final TextEditingController minutesController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppTheme.bgCard,
+          title: const Text('Custom Timer', style: TextStyle(color: AppTheme.textMain)),
+          content: TextField(
+            controller: minutesController,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'Enter minutes',
+              suffixText: 'min',
+            ),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: AppTheme.textMuted)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final mins = int.tryParse(minutesController.text.trim());
+                if (mins != null && mins > 0) {
+                  ref.read(sessionStateProvider.notifier).pushCountdown(mins * 60);
+                  ref.read(sessionStateProvider.notifier).pushAnnouncement(_timerMessageController.text.trim());
+                }
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentPurple),
+              child: const Text('Start'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -1120,6 +1193,16 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
           ),
           const SizedBox(height: 8),
           const Text('Used for automated performance logging.', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+          const SizedBox(height: 16),
+          const Text('Smule Default Username', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          TextFormField(
+            initialValue: settings.smuleDefaultUsername,
+            decoration: const InputDecoration(hintText: 'e.g. JasonDerulo'),
+            onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings(smuleDefaultUsername: val),
+          ),
+          const SizedBox(height: 8),
+          const Text('Used as the default search when looking for Smule performances.', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
         ],
       ),
     );

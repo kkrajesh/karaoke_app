@@ -5,6 +5,7 @@ import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import '../services/youtube_service.dart';
+import '../services/smule_service.dart';
 import '../providers/app_state_provider.dart';
 
 import '../models/song.dart';
@@ -52,13 +53,26 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
   void _initSong(Song newSong) {
     if (kIsWeb) {
-      if (newSong.isLocal) {
+      if (newSong.videoId.startsWith('https://www.smule.com')) {
+        _initWebSmulePlayer(newSong.videoId);
+      } else if (newSong.isLocal) {
         _initWebLocalPlayer(newSong.videoId);
       } else {
         _initWebYtPlayer(newSong.videoId);
       }
     } else {
       _initNativePlayer(newSong);
+    }
+  }
+
+  Future<void> _initWebSmulePlayer(String smuleUrl) async {
+    final smuleService = ref.read(smuleServiceProvider);
+    final streamUrl = await smuleService.getMediaUrl(smuleUrl);
+    if (streamUrl != null && mounted) {
+      _webLocalController = VideoPlayerController.networkUrl(Uri.parse(streamUrl));
+      await _webLocalController!.initialize();
+      _webLocalController!.play();
+      setState(() {});
     }
   }
 
@@ -94,7 +108,10 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
       String? streamUrl;
       
-      if (song.isLocal) {
+      if (song.videoId.startsWith('https://www.smule.com')) {
+        final smuleService = ref.read(smuleServiceProvider);
+        streamUrl = await smuleService.getMediaUrl(song.videoId);
+      } else if (song.isLocal) {
         // Convert backslashes to forward slashes for libmpv, avoiding percent-encoding issues
         streamUrl = song.videoId.replaceAll('\\', '/');
       } else {
@@ -145,7 +162,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         return Container(color: Colors.black);
       }
       
-      if (widget.song!.isLocal) {
+      if (widget.song!.isLocal || widget.song!.videoId.startsWith('https://www.smule.com')) {
         if (_webLocalController != null && _webLocalController!.value.isInitialized) {
           return Center(
             child: AspectRatio(

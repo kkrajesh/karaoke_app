@@ -8,7 +8,13 @@
         - [x] Add ability to delete a song from the upcoming songs list.
         - [x] Add ability to call back a past singer to sing again
         - [x] Add ability to undo delete song and call back singer
-        - [] change the timers to 1, 3 , 5 & custom timer with associated small messages.
+        - [x] change the timers to 1, 3 , 5 & custom timer with associated small messages.
+        - [] ability to add couple of tags to the current song and capture the same in the google sheets. 1. Star to indicate it is good Karaoke 2. Todo indicator to mark the song to the perromance list.
+        - [] Add the option to flip the host screen to other dashboards - audience, singer, display and quick polls dashboard.
+    - [] Song Library
+        - [x] make the previews open in a popup instead of expanding, but give an option for expanding the popup.
+        - [x] for non-loal files give an option to preview it in browser directly
+
 
     - [] Public Display
         - [] Add real-time QR code to join the event that is displayed on the screen.
@@ -19,11 +25,10 @@
     - [] audience display
         - [x] make the Audience reaction section a reusable component and make it available in host and singer pages 
 
-
-
     - [] Starting Page
         - [] make it fit into single page with no scrolling. Use small cards to stack the content. Reduce the size of all the elements to fit on one page.
-- [] Smule
+
+- [] Smule (Blocked by Cloudflare - Requires Headless Browser proxy / Option 3)
     - [] Add smule searching and make available for the singers to select and add to queue
     - [] Add smule to the list of sources for the public display
     - [] Display smule performance on public display and audience display
@@ -31,7 +36,7 @@
     - [] ability to search smule performances by username   
 
 - [] Settings Page
-    - [] add a settings page to configure the smule API
+    - [x] add a settings page to configure the smule API
     - [] add a settings page to configure the mediaMonkey DB path
     - [] add a settings page to configure the Google Sheets API
     - [] add a settings page to configure the Webhook URL
@@ -55,6 +60,6 @@
 
 - Bug Fixes
     - [x] Fix the issue where the public display is not updating when the current song changes
-    - [] Song Library/in general the scrolling is not working with my laptop touchpad two finger scroll. (used to work before.)
+    - [x] Song Library/in general the scrolling is not working with my laptop touchpad two finger scroll. (used to work before.)
 
     

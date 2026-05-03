@@ -37,8 +37,8 @@ class GoogleSheetsService {
         'eventName': eventName,
         'singerName': song.requestedByName,
         'songTitle': song.title,
-        'songUrl': song.isLocal ? song.videoId : 'https://www.youtube.com/watch?v=${song.videoId}',
-        'sourceType': song.isLocal ? 'Local' : 'YouTube',
+        'songUrl': song.videoId.startsWith('https://www.smule.com') ? song.videoId : (song.isLocal ? song.videoId : 'https://www.youtube.com/watch?v=${song.videoId}'),
+        'sourceType': song.videoId.startsWith('https://www.smule.com') ? 'Smule' : (song.isLocal ? 'Local' : 'YouTube'),
         'reactionSummary': reactionSummary,
         'totalReactions': totalReactions,
       };

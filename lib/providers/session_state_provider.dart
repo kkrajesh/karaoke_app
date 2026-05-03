@@ -85,6 +85,7 @@ class SessionState {
 class SessionStateNotifier extends Notifier<SessionState> {
   Timer? _pollTimer;
   Timer? _sheetsSyncTimer;
+  Timer? _countdownClearTimer;
 
   bool get _isClient => kIsWeb || ref.read(clientHostIpProvider) != null;
   String get _baseUrl {
@@ -105,6 +106,7 @@ class SessionStateNotifier extends Notifier<SessionState> {
     ref.onDispose(() {
       _pollTimer?.cancel();
       _sheetsSyncTimer?.cancel();
+      _countdownClearTimer?.cancel();
     });
     
     return SessionState();
@@ -478,7 +480,21 @@ class SessionStateNotifier extends Notifier<SessionState> {
         print('Error posting countdown: $e');
       }
     } else {
-      state = state.copyWith(countdownEndTime: endTime, clearCountdown: endTime == null);
+      setCountdownNatively(endTime);
+    }
+  }
+
+  void setCountdownNatively(int? endTimeMs) {
+    state = state.copyWith(countdownEndTime: endTimeMs, clearCountdown: endTimeMs == null);
+    _countdownClearTimer?.cancel();
+    if (endTimeMs != null) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final duration = endTimeMs - now + 30000; // Auto-clear 30 seconds after timer ends
+      if (duration > 0) {
+        _countdownClearTimer = Timer(Duration(milliseconds: duration), () {
+          state = state.copyWith(countdownEndTime: null, clearCountdown: true, announcement: null, clearAnnouncement: true);
+        });
+      }
     }
   }
 
