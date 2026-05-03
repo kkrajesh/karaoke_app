@@ -10,6 +10,7 @@ import '../providers/session_state_provider.dart';
 import '../services/media_monkey_service.dart';
 import '../models/song.dart';
 import 'youtube_service.dart';
+import '../providers/settings_provider.dart';
 
 class LocalServerService {
   final Ref ref;
@@ -96,6 +97,29 @@ class LocalServerService {
       return Response.ok('{"status":"ok"}', headers: {'Content-Type': 'application/json'});
     });
 
+    // PUT /queue/<id>/move
+    app.put('/queue/<id>/move', (Request request, String id) async {
+      int direction = 1;
+      try {
+        final payload = await request.readAsString();
+        if (payload.isNotEmpty) {
+          final data = jsonDecode(payload);
+          direction = data['direction'] ?? 1;
+        }
+      } catch (e) {
+        // ignore
+      }
+      ref.read(sessionStateProvider.notifier).moveQueueItem(id, direction);
+      return Response.ok('{"status":"ok"}', headers: {'Content-Type': 'application/json'});
+    });
+
+    // GET /history
+    app.get('/history', (Request request) {
+      final history = ref.read(sessionStateProvider).history;
+      final historyList = history.map((s) => s.toMap()).toList();
+      return Response.ok(jsonEncode(historyList), headers: {'Content-Type': 'application/json'});
+    });
+
     // GET /search?q=xyz
     app.get('/search', (Request request) async {
       final query = request.url.queryParameters['q'];
@@ -147,9 +171,11 @@ class LocalServerService {
     // GET /display-state
     app.get('/display-state', (Request request) {
       final state = ref.read(sessionStateProvider);
+      final settings = ref.read(settingsProvider);
       final responseBody = {
         'announcement': state.announcement,
         'countdownEndTime': state.countdownEndTime,
+        'eventName': settings.eventName,
       };
       return Response.ok(jsonEncode(responseBody), headers: {'Content-Type': 'application/json'});
     });

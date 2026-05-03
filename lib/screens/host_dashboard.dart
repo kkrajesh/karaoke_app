@@ -68,11 +68,12 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
     );
   }
 
-  Widget _buildSectionHeader(String title, Widget Function(BuildContext context, WidgetRef ref) contentBuilder) {
+  Widget _buildSectionHeader(String title, Widget Function(BuildContext context, WidgetRef ref) contentBuilder, {List<Widget>? actions}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentPink)),
+        Expanded(child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentPink), overflow: TextOverflow.ellipsis)),
+        if (actions != null) ...actions,
         IconButton(
           icon: const Icon(Icons.fullscreen, color: Colors.white70),
           tooltip: 'Expand $title',
@@ -118,11 +119,24 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Column(
-          children: [
-            GradientText('Karaoke Night Live', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-            Text('Your ultimate karaoke party companion', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-          ]
+        title: LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = MediaQuery.of(context).size.width > 800;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GradientText(
+                  ref.watch(settingsProvider).eventName.isNotEmpty 
+                      ? '${ref.watch(settingsProvider).eventName} - Host Dashboard'
+                      : 'Host Dashboard', 
+                  style: TextStyle(fontSize: isDesktop ? 28 : 20, fontWeight: FontWeight.bold)
+                ),
+                if (isDesktop)
+                  const Text('Your ultimate karaoke party companion', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+              ]
+            );
+          }
         ),
         toolbarHeight: 80,
         actions: [
@@ -146,8 +160,8 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                     const SizedBox(width: 8),
                     Text(
                       server.isRunning 
-                        ? 'Connect Singers to: ${server.ipAddress}:8080'
-                        : 'Server is offline. Start it on the Home Screen.',
+                        ? (MediaQuery.of(context).size.width > 800 ? 'Connect Singers to: ${server.ipAddress}:8080' : '${server.ipAddress}:8080')
+                        : (MediaQuery.of(context).size.width > 800 ? 'Server is offline. Start it on the Home Screen.' : 'Offline'),
                       style: TextStyle(
                         fontWeight: FontWeight.bold, 
                         color: server.isRunning ? AppTheme.accentPurpleLight : AppTheme.textMuted,
@@ -160,9 +174,10 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
           )
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth > 900) {
+      body: ExcludeSemantics(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+          if (constraints.maxWidth > 1200) {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -170,6 +185,21 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                 Expanded(flex: 4, child: _buildQueueColumn()),
                 Expanded(flex: 4, child: _buildLibraryColumn()),
               ],
+            );
+          } else if (constraints.maxWidth > 800) {
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 1, child: _buildPlayerColumn(isMobile: true)),
+                      Expanded(flex: 1, child: _buildQueueColumn(isMobile: true)),
+                    ],
+                  ),
+                  _buildLibraryColumn(isMobile: true),
+                ],
+              ),
             );
           } else {
             return SingleChildScrollView(
@@ -183,6 +213,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
             );
           }
         },
+      ),
       ),
     );
   }
@@ -442,6 +473,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
       decoration: BoxDecoration(color: AppTheme.bgCard, borderRadius: BorderRadius.circular(8)),
       child: ListView.builder(
         shrinkWrap: !isExpanded,
+        addSemanticIndexes: false,
         itemCount: queue.length,
         itemBuilder: (context, index) => _buildQueueItem(queue[index], index),
       ),
@@ -464,6 +496,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
       decoration: BoxDecoration(color: AppTheme.bgCard, borderRadius: BorderRadius.circular(8)),
       child: ListView.builder(
         shrinkWrap: !isExpanded,
+        addSemanticIndexes: false,
         itemCount: requests.length,
         itemBuilder: (context, index) => _buildRequestItem(requests[index], index, requests.length),
       ),
@@ -479,7 +512,16 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader('Singer Queue ($queueLength)', (c, r) => _buildQueueContent(r, isExpanded: true)),
+          _buildSectionHeader('Singer Queue ($queueLength)', (c, r) => _buildQueueContent(r, isExpanded: true), actions: [
+            IconButton(
+              icon: const Icon(Icons.history, color: AppTheme.accentPink),
+              tooltip: 'Performance History',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: () => _showHistoryDialog(),
+            ),
+            const SizedBox(width: 8),
+          ]),
           const SizedBox(height: 8),
           
           isMobile 
@@ -546,7 +588,81 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
     );
   }
 
+  void _showHistoryDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Consumer(
+          builder: (context, ref, child) {
+            final history = ref.watch(sessionStateProvider).history;
+            return AlertDialog(
+              title: const Text('Performance History', style: TextStyle(color: AppTheme.accentPink)),
+              content: SizedBox(
+                width: 500,
+                height: 500,
+                child: history.isEmpty
+                    ? const Center(child: Text('No history yet.', style: TextStyle(color: AppTheme.textMuted)))
+                    : ListView.builder(
+                        itemCount: history.length,
+                        addSemanticIndexes: false,
+                        itemBuilder: (context, index) {
+                          final song = history[index];
+                          return ListTile(
+                            leading: const CircleAvatar(
+                              backgroundColor: AppTheme.bgInput,
+                              child: Icon(Icons.history, color: AppTheme.textMuted),
+                            ),
+                            title: Text(song.requestedByName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(song.title, style: const TextStyle(color: AppTheme.textMuted)),
+                            trailing: ElevatedButton.icon(
+                              onPressed: () {
+                                final notifier = ref.read(sessionStateProvider.notifier);
+                                final newSong = song.copyWith(
+                                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                  addedAt: DateTime.now(),
+                                  isRequest: false,
+                                );
+                                notifier.addToQueue(newSong);
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).clearSnackBars();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('${song.requestedByName} added back to queue!'),
+                                    action: SnackBarAction(
+                                      label: 'Undo',
+                                      onPressed: () {
+                                        notifier.removeFromQueue(newSong.id);
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.replay, size: 16),
+                              label: const Text('Call Back'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.accentPurple,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildQueueItem(Song song, int index) {
+    final queueLength = ref.read(queueProvider).where((s) => !s.isRequest).length;
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: AppTheme.accentPurple,
@@ -554,11 +670,45 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
       ),
       title: Text(song.requestedByName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
       subtitle: Text(song.title, style: const TextStyle(color: AppTheme.textMuted)),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-        onPressed: () {
-          ref.read(sessionStateProvider.notifier).removeFromQueue(song.id);
-        },
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (index > 0)
+            IconButton(
+              icon: const Icon(Icons.arrow_upward, size: 18, color: Colors.white70),
+              constraints: const BoxConstraints(),
+              padding: const EdgeInsets.all(8),
+              onPressed: () => ref.read(sessionStateProvider.notifier).moveQueueItem(song.id, -1),
+            ),
+          if (index < queueLength - 1)
+            IconButton(
+              icon: const Icon(Icons.arrow_downward, size: 18, color: Colors.white70),
+              constraints: const BoxConstraints(),
+              padding: const EdgeInsets.all(8),
+              onPressed: () => ref.read(sessionStateProvider.notifier).moveQueueItem(song.id, 1),
+            ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+            constraints: const BoxConstraints(),
+            padding: const EdgeInsets.all(8),
+            onPressed: () {
+              final notifier = ref.read(sessionStateProvider.notifier);
+              notifier.removeFromQueue(song.id);
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${song.requestedByName} removed from queue.'),
+                  action: SnackBarAction(
+                    label: 'Undo',
+                    onPressed: () {
+                      notifier.addToQueue(song);
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

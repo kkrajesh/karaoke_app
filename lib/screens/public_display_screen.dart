@@ -278,16 +278,15 @@ class _PublicDisplayScreenState extends ConsumerState<PublicDisplayScreen> {
                   },
                 ),
                 const SizedBox(width: 16),
-                if (nowPlaying != null)
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Refresh Video'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black54,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: _manualRefresh,
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Refresh Video'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black54,
+                    foregroundColor: Colors.white,
                   ),
+                  onPressed: _manualRefresh,
+                ),
               ],
             ),
           ),
@@ -297,31 +296,44 @@ class _PublicDisplayScreenState extends ConsumerState<PublicDisplayScreen> {
   }
 
   Widget _buildIntermissionDisplay() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: RadialGradient(
-          colors: [AppTheme.bgCard, Colors.black],
-          radius: 1.0,
-        )
-      ),
-      child: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.mic_external_on, size: 120, color: AppTheme.textMuted),
-            SizedBox(height: 32),
-            Text(
-              'Karaoke Night Live',
-              style: TextStyle(fontSize: 64, fontWeight: FontWeight.bold, color: AppTheme.accentPink),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 600 || constraints.maxHeight < 400;
+        return Container(
+          decoration: const BoxDecoration(
+            gradient: RadialGradient(
+              colors: [AppTheme.bgCard, Colors.black],
+              radius: 1.0,
+            )
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.mic_external_on, size: isCompact ? 60 : 120, color: AppTheme.textMuted),
+                if (!isCompact) ...[
+                  const SizedBox(height: 32),
+                  const Text(
+                    'Karaoke Night Live',
+                    style: TextStyle(fontSize: 64, fontWeight: FontWeight.bold, color: AppTheme.accentPink),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Get ready for the next performance!',
+                    style: TextStyle(fontSize: 32, color: AppTheme.textMuted),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Get ready for the next performance!',
+                    style: TextStyle(fontSize: 20, color: AppTheme.textMuted),
+                  ),
+                ]
+              ],
             ),
-            SizedBox(height: 16),
-            Text(
-              'Get ready for the next performance!',
-              style: TextStyle(fontSize: 32, color: AppTheme.textMuted),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }
     );
   }
 

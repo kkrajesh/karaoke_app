@@ -7,6 +7,7 @@ import '../models/song.dart';
 import '../models/library_song.dart';
 import '../widgets/song_library.dart';
 import '../widgets/reaction_pad.dart';
+import '../providers/settings_provider.dart';
 
 class AudienceDashboard extends ConsumerStatefulWidget {
   const AudienceDashboard({super.key});
@@ -26,9 +27,18 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final settingsName = ref.watch(settingsProvider).eventName;
+    final sessionName = ref.watch(sessionStateProvider).eventName;
+    final eventName = settingsName.isNotEmpty ? settingsName : (sessionName ?? '');
+
     return Scaffold(
       appBar: AppBar(
-        title: const GradientText('Audience View', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        title: GradientText(
+          eventName.isNotEmpty 
+              ? '$eventName - Audience Dashboard'
+              : 'Audience Dashboard', 
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),

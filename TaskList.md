@@ -4,10 +4,10 @@
         - [x] Add an option to expand/popup all cards to get more real estate to work in and then close.
         - [x] Move "Live Reactions" to be an overlay on top of the "Now Playing" video player and stack text reactions like playing cards.
         - [x] Update "Debug Metadata" to make paths and URLs clickable.
-        - [] Add ability to re-order the upcoming songs list and move a song up or down the list.
-        - [] Add ability to delete a song from the upcoming songs list.
-        - [] Add ability to call back a past singer to sing again
-        - [] Add ability to undo delete song and call back singer
+        - [x] Add ability to re-order the upcoming songs list and move a song up or down the list.
+        - [x] Add ability to delete a song from the upcoming songs list.
+        - [x] Add ability to call back a past singer to sing again
+        - [x] Add ability to undo delete song and call back singer
         - [] change the timers to 1, 3 , 5 & custom timer with associated small messages.
 
     - [] Public Display
@@ -50,7 +50,8 @@
     - [] Log the text reactions received during the performance in a separate tab
     - [] Log the word cloud generated during the performance in a separate tab
     - [] Log the trivia generated during the performance in a separate tab
-    - [] 
+    - [x] add the right prefix for the youtube link for song URL
+    
 
 - Bug Fixes
     - [x] Fix the issue where the public display is not updating when the current song changes

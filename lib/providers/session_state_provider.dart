@@ -16,6 +16,8 @@ class SessionState {
   final String? funFact;
   final String? announcement;
   final int? countdownEndTime; // Unix timestamp in milliseconds
+  final List<Song> history;
+  final String? eventName;
 
   SessionState({
     this.queue = const [],
@@ -25,6 +27,8 @@ class SessionState {
     this.funFact,
     this.announcement,
     this.countdownEndTime,
+    this.history = const [],
+    this.eventName,
   });
 
   SessionState copyWith({
@@ -37,6 +41,8 @@ class SessionState {
     int? countdownEndTime,
     bool clearAnnouncement = false,
     bool clearCountdown = false,
+    List<Song>? history,
+    String? eventName,
   }) {
     return SessionState(
       queue: queue ?? this.queue,
@@ -46,6 +52,8 @@ class SessionState {
       funFact: funFact ?? this.funFact,
       announcement: clearAnnouncement ? null : (announcement ?? this.announcement),
       countdownEndTime: clearCountdown ? null : (countdownEndTime ?? this.countdownEndTime),
+      history: history ?? this.history,
+      eventName: eventName ?? this.eventName,
     );
   }
   
@@ -57,6 +65,8 @@ class SessionState {
     String? funFact,
     String? announcement,
     int? countdownEndTime,
+    List<Song>? history,
+    String? eventName,
   }) {
     return SessionState(
       queue: queue ?? this.queue,
@@ -66,6 +76,8 @@ class SessionState {
       funFact: funFact ?? this.funFact,
       announcement: announcement ?? this.announcement,
       countdownEndTime: countdownEndTime ?? this.countdownEndTime,
+      history: history ?? this.history,
+      eventName: eventName ?? this.eventName,
     );
   }
 }
@@ -142,7 +154,15 @@ class SessionStateNotifier extends Notifier<SessionState> {
           clearAnnouncement: data['announcement'] == null,
           countdownEndTime: data['countdownEndTime'],
           clearCountdown: data['countdownEndTime'] == null,
+          eventName: data['eventName'],
         );
+      }
+      
+      final historyRes = await http.get(Uri.parse('$_baseUrl/history'));
+      if (historyRes.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(historyRes.body);
+        final history = data.map((e) => Song.fromMap(e, e['id'] ?? '')).toList();
+        state = state.copyWith(history: history);
       }
     } catch (e) {
       print('Network sync error: $e');
@@ -238,9 +258,12 @@ class SessionStateNotifier extends Notifier<SessionState> {
     if (activeQueue.isEmpty) {
       if (state.nowPlaying != null) {
         ref.read(googleSheetsServiceProvider).logPerformance(state.nowPlaying!, state.emojiCounts);
+        final updatedHistory = [state.nowPlaying!, ...state.history];
+        state = state.copyWithNullableNowPlaying(clearNowPlaying: true, funFact: null, history: updatedHistory);
+      } else {
+        state = state.copyWithNullableNowPlaying(clearNowPlaying: true, funFact: null);
       }
       _sheetsSyncTimer?.cancel();
-      state = state.copyWithNullableNowPlaying(clearNowPlaying: true, funFact: null);
       return;
     }
 
@@ -272,6 +295,7 @@ class SessionStateNotifier extends Notifier<SessionState> {
       nowPlaying: nextSong,
       clearReactions: false,
       funFact: 'Generating AI Fact...',
+      history: [nextSong, ...state.history],
     );
 
     // Log the start of the performance
@@ -315,6 +339,59 @@ class SessionStateNotifier extends Notifier<SessionState> {
     state = state.copyWith(
       queue: state.queue.where((song) => song.id != songId).toList(),
     );
+  }
+
+  Future<void> moveQueueItem(String id, int direction) async {
+    if (_isClient) {
+      try {
+        await http.put(
+          Uri.parse('$_baseUrl/queue/$id/move'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'direction': direction}),
+        );
+      } catch (e) {
+        print('Error moving queue item: $e');
+      }
+      return;
+    }
+
+    int _sortQueue(Song a, Song b) {
+      if (a.isRequest && !b.isRequest) return 1;
+      if (!a.isRequest && b.isRequest) return -1;
+      return a.addedAt.compareTo(b.addedAt);
+    }
+
+    final activeQueue = state.queue.where((s) => !s.isRequest).toList();
+    final idx = activeQueue.indexWhere((s) => s.id == id);
+    if (idx == -1) return;
+
+    if (direction < 0 && idx > 0) {
+      final current = activeQueue[idx];
+      final above = activeQueue[idx - 1];
+      final tempTime = current.addedAt;
+      
+      final updatedCurrent = current.copyWith(addedAt: above.addedAt);
+      final updatedAbove = above.copyWith(addedAt: tempTime);
+      
+      final newQueue = List<Song>.from(state.queue);
+      newQueue[newQueue.indexWhere((s) => s.id == current.id)] = updatedCurrent;
+      newQueue[newQueue.indexWhere((s) => s.id == above.id)] = updatedAbove;
+      
+      state = state.copyWith(queue: newQueue..sort(_sortQueue));
+    } else if (direction > 0 && idx < activeQueue.length - 1) {
+      final current = activeQueue[idx];
+      final below = activeQueue[idx + 1];
+      final tempTime = current.addedAt;
+      
+      final updatedCurrent = current.copyWith(addedAt: below.addedAt);
+      final updatedBelow = below.copyWith(addedAt: tempTime);
+      
+      final newQueue = List<Song>.from(state.queue);
+      newQueue[newQueue.indexWhere((s) => s.id == current.id)] = updatedCurrent;
+      newQueue[newQueue.indexWhere((s) => s.id == below.id)] = updatedBelow;
+      
+      state = state.copyWith(queue: newQueue..sort(_sortQueue));
+    }
   }
 
   void nudgeRequest(String id, int direction) {

@@ -50,6 +50,8 @@ The Host boots up a background `shelf` server upon startup in `HostDashboard`. I
 * `GET /now-playing`: Returns the currently playing `Song` object.
 * `GET /reactions`: Returns the latest 20 audience emoji/comment reactions.
 * `POST /reactions`: Posts a new reaction.
+* `GET /display-state`: Returns the current event name, announcement, and countdown timer.
+* `POST /display-state/announcement` & `POST /display-state/countdown`: Allows the Host to push state to the public and audience displays.
 * `GET /search?q=...`: Proxies a YouTube search or queries the local `MM.DB`. The Host's native instances fetch the data and return the JSON payload, circumventing browser CORS issues and avoiding exposing the local database directly.
 * `GET /local-media?path=...`: Streams a physical media file (e.g., `.mp4`, `.mkv`) from the host's hard drive to web clients using `dart:io` chunked streaming.
 
@@ -116,5 +118,7 @@ The application uses `SharedPreferences` to persist Host configuration via `Sett
 
 The **Host Dashboard** is designed to act as a centralized control room, specifically optimized for desktop or tablet screens. 
 * **Responsive Layout:** On larger screens, the dashboard transitions into a 3-column single-page layout that eliminates the need for vertical page scrolling. Lists like the Queue and Song Library internally scroll within fixed flex constraints.
+* **Multi-Window & Grid Optimizations:** The entire suite of dashboards (Singer, Audience, Host, Public Display) heavily utilizes `LayoutBuilder` to intelligently adapt to limited viewports (e.g., when tiling multiple windows on a single monitor). Text truncates gracefully, columns collapse into single stacks, and non-essential titles are dynamically hidden on the Public Display to conserve space.
+* **Dynamic Event Branding:** The Event Name is configured in the Host's `SharedPreferences` and broadcast via the `/display-state` API endpoint so all remote web clients dynamically update their AppBar titles to match the event.
 * **Expandable Cards:** Because screen real estate is critical, almost all sections (Singer Queue, Song Requests, Song Library, Settings, etc.) feature an "Expand" button in their headers. Clicking this opens a large, responsive modal overlay using Riverpod `Consumer` widgets to remain perfectly in sync with live data while providing maximum working area.
 * **Live Reaction Overlays:** Rather than taking up sidebar space, audience emojis and text reactions overlay beautifully on top of the "Now Playing" video player. Text reactions dynamically overlap like a hand of playing cards to conserve horizontal space.

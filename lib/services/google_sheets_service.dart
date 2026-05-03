@@ -37,7 +37,7 @@ class GoogleSheetsService {
         'eventName': eventName,
         'singerName': song.requestedByName,
         'songTitle': song.title,
-        'songUrl': song.videoId,
+        'songUrl': song.isLocal ? song.videoId : 'https://www.youtube.com/watch?v=${song.videoId}',
         'sourceType': song.isLocal ? 'Local' : 'YouTube',
         'reactionSummary': reactionSummary,
         'totalReactions': totalReactions,

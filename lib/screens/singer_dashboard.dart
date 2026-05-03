@@ -10,6 +10,7 @@ import '../models/song.dart';
 import '../models/library_song.dart';
 import '../widgets/song_library.dart';
 import '../widgets/reaction_pad.dart';
+import '../providers/settings_provider.dart';
 
 class SingerDashboard extends ConsumerStatefulWidget {
   const SingerDashboard({super.key});
@@ -75,12 +76,22 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 768;
+    
+    final settingsName = ref.watch(settingsProvider).eventName;
+    final sessionName = ref.watch(sessionStateProvider).eventName;
+    final eventName = settingsName.isNotEmpty ? settingsName : (sessionName ?? '');
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
           children: [
-            GradientText('Karaoke Night Live', style: TextStyle(fontSize: isDesktop ? 28 : 20, fontWeight: FontWeight.bold)),
-            Text('Your ultimate karaoke party companion', style: const TextStyle(color: AppTheme.textMuted, fontSize: 10)),
+            GradientText(
+              eventName.isNotEmpty 
+                  ? '$eventName - Singer Dashboard'
+                  : 'Singer Dashboard', 
+              style: TextStyle(fontSize: isDesktop ? 28 : 20, fontWeight: FontWeight.bold)
+            ),
+            const Text('Your ultimate karaoke party companion', style: TextStyle(color: AppTheme.textMuted, fontSize: 10)),
           ]
         ),
         toolbarHeight: isDesktop ? 64 : 48,
