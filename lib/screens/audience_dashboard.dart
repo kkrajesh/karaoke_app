@@ -6,6 +6,7 @@ import '../providers/session_state_provider.dart';
 import '../models/song.dart';
 import '../models/library_song.dart';
 import '../widgets/song_library.dart';
+import '../widgets/reaction_pad.dart';
 
 class AudienceDashboard extends ConsumerStatefulWidget {
   const AudienceDashboard({super.key});
@@ -177,93 +178,9 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
   }
 
   Widget _buildReactionsCard() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppTheme.bgCard.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.border.withOpacity(0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Audience Reactions',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight),
-          ),
-          const SizedBox(height: 16),
-          // We can remove the "Live comments will appear here" box from the audience view,
-          // since the audience just sends them. But let's leave it as a placeholder for now.
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _EmojiBtn('👏', ref),
-              _EmojiBtn('🔥', ref),
-              _EmojiBtn('🎤', ref),
-              _EmojiBtn('😂', ref),
-              _EmojiBtn('💖', ref),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _commentController,
-                  decoration: const InputDecoration(
-                    hintText: 'Say something encouraging...',
-                  ),
-                  onSubmitted: (value) {
-                    if (value.isNotEmpty) {
-                      ref.read(sessionStateProvider.notifier).sendReaction('audience', value, isEmoji: false);
-                      _commentController.clear();
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              IconButton(
-                style: IconButton.styleFrom(
-                  backgroundColor: AppTheme.accentPurple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                ),
-                onPressed: () {
-                  if (_commentController.text.isNotEmpty) {
-                    ref.read(sessionStateProvider.notifier).sendReaction('audience', _commentController.text, isEmoji: false);
-                    _commentController.clear();
-                  }
-                },
-                icon: const Icon(Icons.send),
-              ),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-}
-
-class _EmojiBtn extends StatelessWidget {
-  final String emoji;
-  final WidgetRef ref;
-  const _EmojiBtn(this.emoji, this.ref);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.bgInput,
-        shape: BoxShape.circle,
-      ),
-      child: IconButton(
-        icon: Text(emoji, style: const TextStyle(fontSize: 24)),
-        onPressed: () {
-          ref.read(sessionStateProvider.notifier).sendReaction('audience', emoji);
-        },
-      ),
+    return const ReactionPadCard(
+      title: 'Audience Reactions',
+      role: 'audience',
     );
   }
 }

@@ -107,6 +107,7 @@ class _SongLibraryState extends ConsumerState<SongLibrary> {
                 }
                 return ListView.builder(
                   itemCount: songs.length,
+                  addSemanticIndexes: false,
                   itemBuilder: (context, index) => _buildSongItem(songs[index]),
                 );
               },

@@ -9,6 +9,7 @@ import '../providers/app_state_provider.dart';
 import '../models/song.dart';
 import '../models/library_song.dart';
 import '../widgets/song_library.dart';
+import '../widgets/reaction_pad.dart';
 
 class SingerDashboard extends ConsumerStatefulWidget {
   const SingerDashboard({super.key});
@@ -84,8 +85,8 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
         ),
         toolbarHeight: isDesktop ? 64 : 48,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1000),
@@ -93,9 +94,11 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildSignUpCard(),
-                const SizedBox(height: 12),
-                Expanded(child: _buildLibraryCard()),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
+                SizedBox(height: 250, child: _buildLibraryCard()),
+                const SizedBox(height: 8),
+                const ReactionPadCard(title: 'Live Reactions', role: 'singer'),
+                const SizedBox(height: 8),
                 _buildAISuggestionsCard(),
               ],
             ),
@@ -108,7 +111,7 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
   Widget _buildSignUpCard() {
     final isDesktop = MediaQuery.of(context).size.width > 768;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppTheme.bgCard,
         borderRadius: BorderRadius.circular(8),
@@ -116,27 +119,29 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Sign Up to Sing', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight)),
-          const SizedBox(height: 8),
+          const Text('Sign Up to Sing', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight)),
+          const SizedBox(height: 6),
           if (isDesktop)
             Row(
               children: [
-                Expanded(child: TextField(controller: _stageNameController, decoration: const InputDecoration(hintText: 'Your Stage Name'))),
-                const SizedBox(width: 16),
+                Expanded(child: TextField(controller: _stageNameController, decoration: const InputDecoration(hintText: 'Stage Name', isDense: true))),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                     decoration: BoxDecoration(color: AppTheme.bgInput, borderRadius: BorderRadius.circular(6), border: Border.all(color: AppTheme.border)),
                     child: Text(
                       _selectedSong?.title ?? 'Select a song below...',
-                      style: TextStyle(color: _selectedSong == null ? AppTheme.textMuted : Colors.white),
+                      style: TextStyle(color: _selectedSong == null ? AppTheme.textMuted : Colors.white, fontSize: 13),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: _joinQueue,
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16)), // Green-800
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12)),
                   child: const Text('Join Queue', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
@@ -146,12 +151,12 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TextField(controller: _stageNameController, decoration: const InputDecoration(hintText: 'Your Stage Name', isDense: true)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                         decoration: BoxDecoration(color: AppTheme.bgInput, borderRadius: BorderRadius.circular(6), border: Border.all(color: AppTheme.border)),
                         child: Text(
                           _selectedSong?.title ?? 'Select a song below...',
@@ -164,7 +169,7 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: _joinQueue,
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10)), // Green-800
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
                       child: const Text('Join', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                     ),
                   ],
@@ -187,6 +192,8 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
       },
     );
   }
+
+
 
   Widget _buildAISuggestionsCard() {
     final isDesktop = MediaQuery.of(context).size.width > 768;

@@ -11,6 +11,7 @@ import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/gradient_text.dart';
 import '../widgets/song_library.dart';
+import '../widgets/reaction_pad.dart';
 
 class HostDashboard extends ConsumerStatefulWidget {
   const HostDashboard({super.key});
@@ -189,9 +190,10 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
   Widget _buildPlayerColumn({bool isMobile = false}) {
     final nowPlaying = ref.watch(nowPlayingProvider);
     
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
+    return SingleChildScrollView(
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (nowPlaying != null)
@@ -235,13 +237,16 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
           _buildAiHostInfo(),
           
           const SizedBox(height: 16),
+          const ReactionPadCard(title: 'Live Reactions Pad', role: 'host'),
+          const SizedBox(height: 16),
           
           if (nowPlaying != null)
             _buildDebugMetadata(nowPlaying),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildReactionsOverlay() {
     final emojiCounts = ref.watch(sessionStateProvider).emojiCounts;
@@ -361,6 +366,8 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
       ),
     );
   }
+
+
 
   Widget _buildDebugMetadataContent(WidgetRef ref, Song nowPlaying) {
     return Column(

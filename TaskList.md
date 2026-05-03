@@ -17,7 +17,7 @@
         - [] ability to swap singers for a duet
 
     - [] audience display
-        - [] make the Audience reaction section a reusable component and make it available in host and singer pages 
+        - [x] make the Audience reaction section a reusable component and make it available in host and singer pages 
 
 
 
