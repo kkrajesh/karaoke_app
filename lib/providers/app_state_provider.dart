@@ -29,6 +29,15 @@ class AppStateNotifier extends Notifier<AppState> {
     state = AppState(user: state.user, selectedRole: UserRole.none);
   }
 
+  void changeRole(UserRole role) {
+    if (state.user != null) {
+      state = state.copyWith(
+        user: state.user!.copyWith(role: role),
+        selectedRole: role,
+      );
+    }
+  }
+
   Future<void> signIn({required String name, String? email, String? phone}) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     final user = AppUser(

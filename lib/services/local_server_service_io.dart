@@ -85,16 +85,18 @@ class LocalServerService {
     // PUT /queue/<id>/approve
     app.put('/queue/<id>/approve', (Request request, String id) async {
       String? assignedSinger;
+      String? assignedDuetSinger;
       try {
         final payload = await request.readAsString();
         if (payload.isNotEmpty) {
           final data = jsonDecode(payload);
           assignedSinger = data['assignedSinger'];
+          assignedDuetSinger = data['assignedDuetSinger'];
         }
       } catch (e) {
         // ignore JSON parse errors if body is empty
       }
-      ref.read(sessionStateProvider.notifier).approveRequest(id, assignedSinger: assignedSinger);
+      ref.read(sessionStateProvider.notifier).approveRequest(id, assignedSinger: assignedSinger, assignedDuetSinger: assignedDuetSinger);
       return Response.ok('{"status":"ok"}', headers: {'Content-Type': 'application/json'});
     });
 

@@ -35,7 +35,7 @@ class GoogleSheetsService {
         'songId': song.id,
         'timestamp': timestamp,
         'eventName': eventName,
-        'singerName': song.requestedByName,
+        'singerName': song.displaySingerName,
         'songTitle': song.title,
         'songUrl': song.videoId.startsWith('https://www.smule.com') ? song.videoId : (song.isLocal ? song.videoId : 'https://www.youtube.com/watch?v=${song.videoId}'),
         'sourceType': song.videoId.startsWith('https://www.smule.com') ? 'Smule' : (song.isLocal ? 'Local' : 'YouTube'),
@@ -43,7 +43,7 @@ class GoogleSheetsService {
         'totalReactions': totalReactions,
       };
 
-      print('[GoogleSheetsService] Logging performance to sheet: ${song.title} by ${song.requestedByName}');
+      print('[GoogleSheetsService] Logging performance to sheet: ${song.title} by ${song.displaySingerName}');
 
       final response = await http.post(
         Uri.parse(webhookUrl),

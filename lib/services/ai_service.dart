@@ -20,9 +20,9 @@ class AiService {
     final fact = _mockFacts[random.nextInt(_mockFacts.length)];
     
     if (nextSong != null) {
-      return "🎤 Currently singing: ${currentSong.requestedByName}\n\n🤖 AI Fun Fact about '${currentSong.title}': $fact\n\nUp Next: ${nextSong.requestedByName} getting ready to sing '${nextSong.title}'.";
+      return "🎤 Currently singing: ${currentSong.displaySingerName}\n\n🤖 AI Fun Fact about '${currentSong.title}': $fact\n\nUp Next: ${nextSong.displaySingerName} getting ready to sing '${nextSong.title}'.";
     } else {
-      return "🎤 Currently singing: ${currentSong.requestedByName}\n\n🤖 AI Fun Fact about '${currentSong.title}': $fact\n\nThe stage is empty after this! Someone queue up a song!";
+      return "🎤 Currently singing: ${currentSong.displaySingerName}\n\n🤖 AI Fun Fact about '${currentSong.title}': $fact\n\nThe stage is empty after this! Someone queue up a song!";
     }
   }
 }

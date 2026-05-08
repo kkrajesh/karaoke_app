@@ -5,7 +5,15 @@ class Song {
   final bool isLocal;
   final String requestedBy;
   final String requestedByName;
+  final String? duetSingerName;
   final DateTime addedAt;
+  
+  String get displaySingerName {
+    if (duetSingerName != null && duetSingerName!.isNotEmpty) {
+      return '$requestedByName & $duetSingerName';
+    }
+    return requestedByName;
+  }
   
   // Audience Request Fields
   final bool isRequest;
@@ -20,6 +28,7 @@ class Song {
     this.isLocal = false,
     required this.requestedBy,
     required this.requestedByName,
+    this.duetSingerName,
     required this.addedAt,
     this.isRequest = false,
     this.requestedFor,
@@ -35,6 +44,7 @@ class Song {
       isLocal: map['isLocal'] ?? false,
       requestedBy: map['requestedBy'] ?? '',
       requestedByName: map['requestedByName'] ?? '',
+      duetSingerName: map['duetSingerName'],
       addedAt: map['addedAt'] != null 
           ? DateTime.fromMillisecondsSinceEpoch(map['addedAt']) 
           : DateTime.now(),
@@ -52,6 +62,7 @@ class Song {
       'isLocal': isLocal,
       'requestedBy': requestedBy,
       'requestedByName': requestedByName,
+      if (duetSingerName != null) 'duetSingerName': duetSingerName,
       'addedAt': addedAt.millisecondsSinceEpoch,
       'isRequest': isRequest,
       if (requestedFor != null) 'requestedFor': requestedFor,
@@ -67,6 +78,7 @@ class Song {
     bool? isLocal,
     String? requestedBy,
     String? requestedByName,
+    String? duetSingerName,
     DateTime? addedAt,
     bool? isRequest,
     String? requestedFor,
@@ -80,6 +92,7 @@ class Song {
       isLocal: isLocal ?? this.isLocal,
       requestedBy: requestedBy ?? this.requestedBy,
       requestedByName: requestedByName ?? this.requestedByName,
+      duetSingerName: duetSingerName ?? this.duetSingerName,
       addedAt: addedAt ?? this.addedAt,
       isRequest: isRequest ?? this.isRequest,
       requestedFor: requestedFor ?? this.requestedFor,

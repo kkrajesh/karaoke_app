@@ -133,3 +133,19 @@ The application has foundational components prepared for integrating Smule perfo
 **The Blocker:** Smule has implemented aggressive Cloudflare Bot Management across their entire domain. Any standard HTTP requests (including `http.get` in Dart or raw `curl` commands) are immediately intercepted by a Cloudflare Javascript challenge (`window.__CF$cv$params`), completely blocking the scraper from extracting search results or media stream tags.
 
 **Future Implementation (Option 3):** When the decision is made to re-activate Smule, the standard HTTP proxy endpoints in `LocalServerService` must be replaced with a headless browser approach. This will require running a background Chrome instance (e.g. using a Node.js `puppeteer-extra-plugin-stealth` script or Python `undetected-chromedriver` proxy) alongside the Dart server to seamlessly solve the JS challenges, scrape the DOM, and pass the pristine `.mp4` URLs back to the Flutter frontend.
+
+---
+
+## 11. Duet Support
+
+The karaoke data model supports duet performances natively.
+* **Song Model:** A nullable `duetSingerName` property is tracked alongside `requestedByName`. The UI exclusively binds to a dynamic `displaySingerName` getter, which seamlessly formats strings as `"Primary & Secondary"` if a duet partner is assigned, ensuring all displays (Public TV, Host, Audience) render correctly without UI layer conditionals.
+* **State Management:** `SessionStateNotifier` includes specific `swapDuetSingers` (instantly inverting primary/secondary) and `editSongSingers` controls, directly accessible from the Host Dashboard queue list.
+
+---
+
+## 12. Flipped Dashboards & Multi-Window Mode
+
+Because Flutter Desktop lacks robust native multi-window support without heavy C++ plugins, the application uses a dual-approach to allow the Host to view other dashboards (Singer, Audience, Public Display) concurrently:
+1. **Modal Peeking (In-App):** The Host Dashboard AppBar contains a "Flip Dashboard" dropdown. Selecting a dashboard renders it locally inside a `Dialog.fullscreen()`. This overlay uses a `Stack` to position a floating "Return to Host" button in the corner, allowing the host to quickly peek at other views without losing their `Host` session role.
+2. **Pop-Out (Browser Native Windows):** From the same dropdown, the host can launch dashboards in a separate window via `url_launcher`. This relies on the system's default Web Browser to act as the multi-window manager. The Flutter application uses `Uri.base.queryParameters['role']` inside `HomeScreen` to intercept auto-login queries (e.g., `http://localhost:8080/?role=singer`). The browser automatically skips the auth screen and logs directly into the requested view.

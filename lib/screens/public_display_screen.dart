@@ -158,7 +158,7 @@ class _PublicDisplayScreenState extends ConsumerState<PublicDisplayScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(nowPlaying.requestedByName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                              Text(nowPlaying.displaySingerName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                               const SizedBox(height: 4),
                               Text(nowPlaying.title, style: const TextStyle(fontSize: 14, color: Colors.white70), maxLines: 2, overflow: TextOverflow.ellipsis),
                             ],
@@ -202,7 +202,7 @@ class _PublicDisplayScreenState extends ConsumerState<PublicDisplayScreen> {
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(song.requestedByName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                                              Text(song.displaySingerName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                                               Text(song.title, style: const TextStyle(fontSize: 12, color: AppTheme.textMuted), maxLines: 1, overflow: TextOverflow.ellipsis),
                                             ],
                                           ),

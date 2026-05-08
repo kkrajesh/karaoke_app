@@ -55,6 +55,8 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
 * [x] **Google Sheets YouTube Links**: When adding the youtube songs to the google sheet, prefix it with 'https://www.youtube.com/watch?v=' to make it a ready to access youtube link.
 * [x] **Song Library Previews**: Songs now preview in a compact modal with options to expand to fullscreen or launch directly in the host's native web browser.
 * [x] **Host Timer Controls**: 1, 3, 5, and Custom minute countdown timers can be pushed to all displays alongside a custom text message, with an automatic 30-second cleanup.
+* [x] **Duet Support**: Singers can add an optional duet partner. Hosts can edit or instantly swap primary and secondary singers from the queue controls.
+* [x] **Flipped Dashboards & Multi-Window Mode**: Host can peek at other dashboards (Singer, Audience, Public Display) via in-app fullscreen modals, or pop them out into independent native browser windows with auto-login URL routing.
 
 
 ## Getting Started

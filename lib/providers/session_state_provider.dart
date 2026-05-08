@@ -200,7 +200,7 @@ class SessionStateNotifier extends Notifier<SessionState> {
     }
   }
 
-  void approveRequest(String id, {String? assignedSinger}) {
+  void approveRequest(String id, {String? assignedSinger, String? assignedDuetSinger}) {
     int _sortQueue(Song a, Song b) {
       if (a.isRequest && !b.isRequest) return 1;
       if (!a.isRequest && b.isRequest) return -1;
@@ -208,11 +208,14 @@ class SessionStateNotifier extends Notifier<SessionState> {
     }
 
     if (_isClient) {
-      if (assignedSinger != null) {
+      if (assignedSinger != null || assignedDuetSinger != null) {
         http.put(
           Uri.parse('$_baseUrl/queue/$id/approve'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'assignedSinger': assignedSinger}),
+          body: jsonEncode({
+            if (assignedSinger != null) 'assignedSinger': assignedSinger,
+            if (assignedDuetSinger != null) 'assignedDuetSinger': assignedDuetSinger,
+          }),
         );
       } else {
         http.put(Uri.parse('$_baseUrl/queue/$id/approve'));
@@ -230,6 +233,7 @@ class SessionStateNotifier extends Notifier<SessionState> {
         isLocal: song.isLocal,
         requestedBy: song.requestedBy,
         requestedByName: assignedSinger ?? song.requestedByName,
+        duetSingerName: assignedDuetSinger ?? song.duetSingerName,
         addedAt: DateTime.now(), // Move to end of active queue
         isRequest: false,
         requestedFor: song.requestedFor,
@@ -241,6 +245,37 @@ class SessionStateNotifier extends Notifier<SessionState> {
       
       newQueue.sort(_sortQueue);
       state = state.copyWith(queue: newQueue);
+    }
+  }
+
+  void editSongSingers(String id, String newPrimary, String? newSecondary) {
+    if (_isClient) return; // Only native host can edit right now
+    
+    final idx = state.queue.indexWhere((s) => s.id == id);
+    if (idx != -1) {
+      final newQueue = List<Song>.from(state.queue);
+      newQueue[idx] = newQueue[idx].copyWith(
+        requestedByName: newPrimary,
+        duetSingerName: newSecondary,
+      );
+      state = state.copyWith(queue: newQueue);
+    }
+  }
+
+  void swapDuetSingers(String id) {
+    if (_isClient) return;
+    
+    final idx = state.queue.indexWhere((s) => s.id == id);
+    if (idx != -1) {
+      final song = state.queue[idx];
+      if (song.duetSingerName != null && song.duetSingerName!.isNotEmpty) {
+        final newQueue = List<Song>.from(state.queue);
+        newQueue[idx] = song.copyWith(
+          requestedByName: song.duetSingerName,
+          duetSingerName: song.requestedByName,
+        );
+        state = state.copyWith(queue: newQueue);
+      }
     }
   }
 

@@ -7,11 +7,15 @@ import '../providers/session_state_provider.dart';
 import '../providers/app_state_provider.dart';
 import '../models/song.dart';
 import '../models/library_song.dart';
+import '../models/app_user.dart';
 import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/gradient_text.dart';
 import '../widgets/song_library.dart';
 import '../widgets/reaction_pad.dart';
+import 'singer_dashboard.dart';
+import 'audience_dashboard.dart';
+import 'public_display_screen.dart';
 
 class HostDashboard extends ConsumerStatefulWidget {
   const HostDashboard({super.key});
@@ -87,6 +91,44 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
     );
   }
 
+  void _showDashboardModal(Widget dashboard) {
+    showDialog(
+      context: context,
+      useSafeArea: false,
+      builder: (context) {
+        return Dialog.fullscreen(
+          child: Stack(
+            children: [
+              dashboard,
+              Positioned(
+                bottom: 24,
+                right: 24,
+                child: FloatingActionButton.extended(
+                  backgroundColor: AppTheme.accentPink,
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  label: const Text('Return to Host', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _launchDashboardInBrowser(String role) async {
+    final server = ref.read(localServerProvider);
+    if (!server.isRunning) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please start the server first.')));
+      return;
+    }
+    final url = Uri.parse('http://${server.ipAddress}:8080/?role=$role');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Listen for queue changes to show notification bubbles
@@ -99,7 +141,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
       if (activeQueueLength > _lastQueueLength) {
         final newSong = next.queue.where((s) => !s.isRequest).last;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('🎤 New Singer Added: ${newSong.requestedByName}'),
+          content: Text('🎤 New Singer Added: ${newSong.displaySingerName}'),
           backgroundColor: AppTheme.accentPink,
           duration: const Duration(seconds: 2),
         ));
@@ -107,7 +149,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
       if (requestLength > _lastRequestLength) {
         final newReq = next.queue.where((s) => s.isRequest).last;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('📬 New Request from ${newReq.requestedByName}'),
+          content: Text('📬 New Request from ${newReq.displaySingerName}'),
           backgroundColor: AppTheme.accentBlue,
           duration: const Duration(seconds: 2),
         ));
@@ -142,6 +184,76 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
         ),
         toolbarHeight: 80,
         actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.flip_to_front, color: AppTheme.accentBlue),
+            tooltip: 'Dashboards',
+            onSelected: (value) {
+              if (value.startsWith('peek_')) {
+                final role = value.split('_')[1];
+                if (role == 'singer') _showDashboardModal(const SingerDashboard());
+                if (role == 'audience') _showDashboardModal(const AudienceDashboard());
+                if (role == 'display') _showDashboardModal(const PublicDisplayScreen());
+              } else if (value.startsWith('pop_')) {
+                final role = value.split('_')[1];
+                _launchDashboardInBrowser(role);
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: 'peek_singer',
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Singer Dashboard'),
+                    IconButton(
+                      icon: const Icon(Icons.open_in_new, size: 18, color: AppTheme.textMuted),
+                      tooltip: 'Open in separate window',
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _launchDashboardInBrowser('singer');
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                value: 'peek_audience',
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Audience Dashboard'),
+                    IconButton(
+                      icon: const Icon(Icons.open_in_new, size: 18, color: AppTheme.textMuted),
+                      tooltip: 'Open in separate window',
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _launchDashboardInBrowser('audience');
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                value: 'peek_display',
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Public Display'),
+                    IconButton(
+                      icon: const Icon(Icons.open_in_new, size: 18, color: AppTheme.textMuted),
+                      tooltip: 'Open in separate window',
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _launchDashboardInBrowser('display');
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -614,7 +726,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                               backgroundColor: AppTheme.bgInput,
                               child: Icon(Icons.history, color: AppTheme.textMuted),
                             ),
-                            title: Text(song.requestedByName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            title: Text(song.displaySingerName, style: const TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text(song.title, style: const TextStyle(color: AppTheme.textMuted)),
                             trailing: ElevatedButton.icon(
                               onPressed: () {
@@ -629,7 +741,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                                 ScaffoldMessenger.of(context).clearSnackBars();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('${song.requestedByName} added back to queue!'),
+                                    content: Text('${song.displaySingerName} added back to queue!'),
                                     action: SnackBarAction(
                                       label: 'Undo',
                                       onPressed: () {
@@ -670,7 +782,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
         backgroundColor: AppTheme.accentPurple,
         child: Text('${index + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
-      title: Text(song.requestedByName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+      title: Text(song.displaySingerName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
       subtitle: Text(song.title, style: const TextStyle(color: AppTheme.textMuted)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -689,6 +801,19 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
               padding: const EdgeInsets.all(8),
               onPressed: () => ref.read(sessionStateProvider.notifier).moveQueueItem(song.id, 1),
             ),
+          if (song.duetSingerName != null && song.duetSingerName!.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.swap_horiz, size: 20, color: Colors.blueAccent),
+              constraints: const BoxConstraints(),
+              padding: const EdgeInsets.all(8),
+              onPressed: () => ref.read(sessionStateProvider.notifier).swapDuetSingers(song.id),
+            ),
+          IconButton(
+            icon: const Icon(Icons.edit_note, color: Colors.white70, size: 20),
+            constraints: const BoxConstraints(),
+            padding: const EdgeInsets.all(8),
+            onPressed: () => _showEditSingersDialog(song),
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
             constraints: const BoxConstraints(),
@@ -699,7 +824,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
               ScaffoldMessenger.of(context).clearSnackBars();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('${song.requestedByName} removed from queue.'),
+                  content: Text('${song.displaySingerName} removed from queue.'),
                   action: SnackBarAction(
                     label: 'Undo',
                     onPressed: () {
@@ -729,7 +854,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
           children: [
             Text(req.title, style: const TextStyle(color: AppTheme.textMuted)),
             const SizedBox(height: 4),
-            Text('Requested by: ${req.requestedByName}', style: const TextStyle(fontSize: 12)),
+            Text('Requested by: ${req.displaySingerName}', style: const TextStyle(fontSize: 12)),
             if (req.dedication != null && req.dedication!.isNotEmpty)
               Text('"${req.dedication}"', style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.amber, fontSize: 12)),
             if (req.hostNote != null && req.hostNote!.isNotEmpty)
@@ -774,6 +899,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
 
   void _approveRequestWithSinger(Song req) {
     final hostNameController = TextEditingController();
+    final duetNameController = TextEditingController();
     if (req.requestedFor != null && req.requestedFor != 'Anyone') {
       hostNameController.text = req.requestedFor!;
     }
@@ -790,7 +916,12 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
               const SizedBox(height: 16),
               TextField(
                 controller: hostNameController,
-                decoration: const InputDecoration(labelText: 'Assigned Singer'),
+                decoration: const InputDecoration(labelText: 'Primary Singer'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: duetNameController,
+                decoration: const InputDecoration(labelText: 'Duet Singer (Optional)'),
               ),
             ],
           ),
@@ -802,14 +933,61 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
             ElevatedButton(
               onPressed: () {
                 final assignedName = hostNameController.text.trim();
+                final duetName = duetNameController.text.trim();
                 ref.read(sessionStateProvider.notifier).approveRequest(
                   req.id, 
-                  assignedSinger: assignedName.isEmpty ? null : assignedName
+                  assignedSinger: assignedName.isEmpty ? null : assignedName,
+                  assignedDuetSinger: duetName.isEmpty ? null : duetName,
                 );
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentPurple),
               child: const Text('Approve'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditSingersDialog(Song song) {
+    final primaryController = TextEditingController(text: song.requestedByName);
+    final duetController = TextEditingController(text: song.duetSingerName ?? '');
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Singers'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: primaryController,
+                decoration: const InputDecoration(labelText: 'Primary Singer'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: duetController,
+                decoration: const InputDecoration(labelText: 'Duet Singer (Optional)'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                ref.read(sessionStateProvider.notifier).editSongSingers(
+                  song.id,
+                  primaryController.text.trim().isEmpty ? 'Unknown' : primaryController.text.trim(),
+                  duetController.text.trim().isEmpty ? null : duetController.text.trim(),
+                );
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentPurple),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -858,6 +1036,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
 
   void _addSongToQueue(LibrarySong librarySong) {
     final hostNameController = TextEditingController();
+    final duetNameController = TextEditingController();
     final hostUser = ref.read(appStateProvider).user;
     if (hostUser != null) {
       hostNameController.text = hostUser.name;
@@ -875,7 +1054,12 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
               const SizedBox(height: 16),
               TextField(
                 controller: hostNameController,
-                decoration: const InputDecoration(labelText: 'Singer Name'),
+                decoration: const InputDecoration(labelText: 'Primary Singer Name'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: duetNameController,
+                decoration: const InputDecoration(labelText: 'Duet Singer (Optional)'),
               ),
             ],
           ),
@@ -893,6 +1077,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                   isLocal: librarySong.source == 'local',
                   requestedBy: hostUser?.id ?? 'host',
                   requestedByName: hostNameController.text.trim().isEmpty ? 'Host' : hostNameController.text.trim(),
+                  duetSingerName: duetNameController.text.trim().isEmpty ? null : duetNameController.text.trim(),
                   addedAt: DateTime.now(),
                 );
                 ref.read(sessionStateProvider.notifier).addToQueue(queueSong);

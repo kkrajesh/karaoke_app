@@ -21,6 +21,7 @@ class SingerDashboard extends ConsumerStatefulWidget {
 
 class _SingerDashboardState extends ConsumerState<SingerDashboard> {
   final TextEditingController _stageNameController = TextEditingController();
+  final TextEditingController _duetNameController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   LibrarySong? _selectedSong;
 
@@ -38,6 +39,7 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
   @override
   void dispose() {
     _stageNameController.dispose();
+    _duetNameController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -60,6 +62,7 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
       isLocal: _selectedSong!.source == 'local',
       requestedBy: user?.id ?? 'unknown',
       requestedByName: _stageNameController.text.trim(),
+      duetSingerName: _duetNameController.text.trim().isEmpty ? null : _duetNameController.text.trim(),
       addedAt: DateTime.now(),
     );
 
@@ -135,7 +138,9 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
           if (isDesktop)
             Row(
               children: [
-                Expanded(child: TextField(controller: _stageNameController, decoration: const InputDecoration(hintText: 'Stage Name', isDense: true))),
+                Expanded(child: TextField(controller: _stageNameController, decoration: const InputDecoration(hintText: 'Primary Stage Name', isDense: true))),
+                const SizedBox(width: 8),
+                Expanded(child: TextField(controller: _duetNameController, decoration: const InputDecoration(hintText: 'Duet Singer (Optional)', isDense: true))),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Container(
@@ -161,7 +166,9 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextField(controller: _stageNameController, decoration: const InputDecoration(hintText: 'Your Stage Name', isDense: true)),
+                TextField(controller: _stageNameController, decoration: const InputDecoration(hintText: 'Primary Stage Name', isDense: true)),
+                const SizedBox(height: 6),
+                TextField(controller: _duetNameController, decoration: const InputDecoration(hintText: 'Duet Singer (Optional)', isDense: true)),
                 const SizedBox(height: 6),
                 Row(
                   children: [

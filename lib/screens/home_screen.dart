@@ -27,6 +27,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          final roleStr = Uri.base.queryParameters['role'];
+          if (roleStr != null) {
+            UserRole? selected;
+            if (roleStr == 'singer') selected = UserRole.singer;
+            else if (roleStr == 'audience') selected = UserRole.audience;
+            else if (roleStr == 'display') selected = UserRole.publicDisplay;
+            
+            if (selected != null) {
+              ref.read(appStateProvider.notifier).selectRole(selected);
+              ref.read(appStateProvider.notifier).signIn(name: 'Host');
+            }
+          }
+        } catch (e) {
+          // ignore uri parsing errors
+        }
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();

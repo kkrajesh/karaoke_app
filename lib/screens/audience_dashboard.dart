@@ -161,7 +161,7 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
             ),
             const SizedBox(height: 8),
             Text(
-              nowPlaying.requestedByName,
+              nowPlaying.displaySingerName,
               style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
               textAlign: TextAlign.center,
             ),
