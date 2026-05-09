@@ -4,13 +4,15 @@ import '../models/app_user.dart';
 class AppState {
   final AppUser? user;
   final UserRole selectedRole;
+  final bool isPrimaryHost;
 
-  AppState({this.user, this.selectedRole = UserRole.none});
+  AppState({this.user, this.selectedRole = UserRole.none, this.isPrimaryHost = false});
 
-  AppState copyWith({AppUser? user, UserRole? selectedRole}) {
+  AppState copyWith({AppUser? user, UserRole? selectedRole, bool? isPrimaryHost}) {
     return AppState(
       user: user ?? this.user,
       selectedRole: selectedRole ?? this.selectedRole,
+      isPrimaryHost: isPrimaryHost ?? this.isPrimaryHost,
     );
   }
 }
@@ -38,7 +40,7 @@ class AppStateNotifier extends Notifier<AppState> {
     }
   }
 
-  Future<void> signIn({required String name, String? email, String? phone}) async {
+  Future<void> signIn({required String name, String? email, String? phone, String? insta, bool isPrimaryHost = false}) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     final user = AppUser(
       id: id,
@@ -46,8 +48,9 @@ class AppStateNotifier extends Notifier<AppState> {
       role: state.selectedRole,
       email: email,
       phone: phone,
+      insta: insta,
     );
-    state = state.copyWith(user: user);
+    state = state.copyWith(user: user, isPrimaryHost: isPrimaryHost);
   }
 
   void signOut() {

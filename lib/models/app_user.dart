@@ -12,6 +12,7 @@ class AppUser {
   final UserRole role;
   final String? email;
   final String? phone;
+  final String? insta;
 
   AppUser({
     required this.id, 
@@ -19,6 +20,7 @@ class AppUser {
     required this.role,
     this.email,
     this.phone,
+    this.insta,
   });
 
   AppUser copyWith({
@@ -27,6 +29,7 @@ class AppUser {
     UserRole? role,
     String? email,
     String? phone,
+    String? insta,
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -34,6 +37,7 @@ class AppUser {
       role: role ?? this.role,
       email: email ?? this.email,
       phone: phone ?? this.phone,
+      insta: insta ?? this.insta,
     );
   }
 }

@@ -1,4 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'player_screen.dart';
@@ -692,11 +696,26 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                 ),
               ),
           const SizedBox(height: 16),
-          _buildDisplayControls(),
-          const SizedBox(height: 12),
-          _buildManageLibraryTile(),
-          const SizedBox(height: 12),
-          _buildAppSettingsTile(),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.45,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildDisplayControls(),
+                  const SizedBox(height: 12),
+                  if (ref.watch(appStateProvider).isPrimaryHost) ...[
+                    _buildNetworkConfigTile(),
+                    const SizedBox(height: 12),
+                  ],
+                  _buildManageLibraryTile(),
+                  const SizedBox(height: 12),
+                  _buildAppSettingsTile(),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1352,6 +1371,142 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
     );
   }
 
+  Widget _buildNetworkConfigContent(WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    
+    return StatefulBuilder(
+      builder: (context, setLocalState) {
+        final server = ref.read(localServerProvider);
+        
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Event Name', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              TextFormField(
+                initialValue: settings.eventName,
+                decoration: const InputDecoration(hintText: 'e.g. Friday Night Karaoke'),
+                onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings(eventName: val),
+              ),
+              const SizedBox(height: 24),
+              const Text('Local Server Status', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: server.isRunning ? AppTheme.accentPurple.withOpacity(0.1) : AppTheme.bgInput,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: server.isRunning ? AppTheme.accentPurple : AppTheme.border),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(server.isRunning ? Icons.wifi : Icons.wifi_off, color: server.isRunning ? AppTheme.accentPurpleLight : AppTheme.textMuted),
+                              const SizedBox(width: 8),
+                              Text(server.isRunning ? 'Server is Live' : 'Server Offline', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          if (server.isRunning) ...[
+                            const Text('Attendees can join at:', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                            Text('http://${server.ipAddress}:8080', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                          ] else ...[
+                            const Text('Start the server to allow attendees to join.', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                          ],
+                          const SizedBox(height: 12),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              if (server.isRunning) {
+                                server.stopServer();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Server stopped.'),
+                                      backgroundColor: Colors.redAccent,
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              } else {
+                                await server.startServer();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Server started successfully at ${server.ipAddress}:8080!'),
+                                      backgroundColor: Colors.green,
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: const Duration(seconds: 3),
+                                    ),
+                                  );
+                                }
+                              }
+                              setLocalState(() {});
+                              setState(() {}); // Updates the background screen behind the dialog too
+                            },
+                            icon: Icon(server.isRunning ? Icons.stop : Icons.play_arrow),
+                            label: Text(server.isRunning ? 'Stop Server' : 'Start Server'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: server.isRunning ? AppTheme.bgDark : AppTheme.accentPurple,
+                              foregroundColor: server.isRunning ? Colors.redAccent : Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (server.isRunning)
+                      Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(4),
+                        margin: const EdgeInsets.only(left: 8),
+                        child: QrImageView(
+                          data: 'http://${server.ipAddress}:8080',
+                          version: QrVersions.auto,
+                          size: 90.0,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNetworkConfigTile() {
+    return Container(
+      decoration: BoxDecoration(color: AppTheme.bgCard, borderRadius: BorderRadius.circular(8)),
+      child: ExpansionTile(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Network & Event Config', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight)),
+            IconButton(
+              icon: const Icon(Icons.fullscreen, size: 20),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: () => _showFullscreenDialog('Network & Event Config', (c, r) => _buildNetworkConfigContent(r)),
+            )
+          ]
+        ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: _buildNetworkConfigContent(ref),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAppSettingsContent(WidgetRef ref) {
     // This assumes we instantiate a local controller in the closure just for rendering,
     // which is fine for the app settings since we use onChanged to dispatch.
@@ -1361,14 +1516,6 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Event Name', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          TextFormField(
-            initialValue: settings.eventName,
-            decoration: const InputDecoration(hintText: 'e.g. Friday Night Karaoke'),
-            onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings(eventName: val),
-          ),
-          const SizedBox(height: 16),
           const Text('Google Sheets Webhook URL', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           TextFormField(

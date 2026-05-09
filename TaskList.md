@@ -17,16 +17,25 @@
 
 
     - [] Public Display
-        - [] Add real-time QR code to join the event that is displayed on the screen.
+        - [x] Add real-time QR code to join the event that is displayed on the screen.
     - [] Singer Display
         - [x] ability to add a second singer for a duet
         - [x] ability to swap singers for a duet
 
     - [] audience display
         - [x] make the Audience reaction section a reusable component and make it available in host and singer pages 
+        - [] when requesting song ask for their name as well, prefill it if they already supplied when the started. Make the same info available to the host request queue
+    
 
     - [] Starting Page
-        - [] make it fit into single page with no scrolling. Use small cards to stack the content. Reduce the size of all the elements to fit on one page.
+        - [x] make two different start up pages - one for the host and other for attendees
+        - [x] Make the "Start or connect" section to inside the host dashboard configuration section and remove it from the starting page
+        - [x] add a new section to the host configuration section to allow easy startup with custom configuration. This will include event name, QR code for event id etc
+        - [x] another start page for the singers and audience with just the Join QR code and the name entry.
+        - [x] Give an option to connect to an existing event - either by scanning the QR code or by entering the event id.
+        - [x] Capture additional contact information (Phone, Email, Instagram) from singers on the sign-in page.
+        - [x] Combine role choice and join party buttons into single action buttons on the home screen.
+       
 
 - [] Smule (Blocked by Cloudflare - Requires Headless Browser proxy / Option 3)
     - [] Add smule searching and make available for the singers to select and add to queue

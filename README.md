@@ -57,6 +57,8 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
 * [x] **Host Timer Controls**: 1, 3, 5, and Custom minute countdown timers can be pushed to all displays alongside a custom text message, with an automatic 30-second cleanup.
 * [x] **Duet Support**: Singers can add an optional duet partner. Hosts can edit or instantly swap primary and secondary singers from the queue controls.
 * [x] **Flipped Dashboards & Multi-Window Mode**: Host can peek at other dashboards (Singer, Audience, Public Display) via in-app fullscreen modals, or pop them out into independent native browser windows with auto-login URL routing.
+* [x] **Streamlined Sign-In**: Combined role selection and login into single-action buttons with automated web QR code host IP resolution.
+* [x] **Advanced Singer Registration**: Enforce collection of phone, email, or Instagram handle for singers, while offering smart bypasses for hosts and audience members.
 
 
 ## Getting Started

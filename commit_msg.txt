@@ -1,0 +1,8 @@
+v1.7.0: Host Dashboard Hardening & Sign-In Flow Updates
+
+Features:
+- Host Authority Enforcement: Network & Event config panel is properly hidden for co-hosts based on the 'isPrimaryHost' flag.
+- Dynamic Event Names: Forced date-based generation of event names on app startup instead of using cached SharedPreferences.
+- Public Display Web Fix: Auto-resolve QR code server IP from browser URL (Uri.base.host).
+- Streamlined Sign-In: Combined role selection and login into single-action buttons.
+- Advanced Singer Registration: Collected optional Phone, Email, and Instagram with smart requirement bypassing for audience and host.

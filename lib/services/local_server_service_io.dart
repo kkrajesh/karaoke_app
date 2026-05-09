@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io' as dart_io;
+import 'package:path/path.dart' as p;
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as io;
 import 'package:shelf_router/shelf_router.dart';
@@ -285,11 +286,26 @@ class LocalServerService {
     // Mount API and conditionally add Static Handler if web build exists
     var cascade = Cascade().add(app.call);
     
+    String? webPath;
+    
     if (dart_io.Directory('build/web').existsSync()) {
-      final staticHandler = createStaticHandler('build/web', defaultDocument: 'index.html');
-      cascade = cascade.add(staticHandler);
+      // Development: Running via `flutter run` in project root
+      webPath = 'build/web';
     } else {
-      print('Warning: build/web directory not found. Web clients will not be served.');
+      // Production: Running the compiled .exe file
+      final exeDir = p.dirname(dart_io.Platform.resolvedExecutable);
+      final releaseWebPath = p.join(exeDir, 'web');
+      if (dart_io.Directory(releaseWebPath).existsSync()) {
+        webPath = releaseWebPath;
+      }
+    }
+
+    if (webPath != null) {
+      final staticHandler = createStaticHandler(webPath, defaultDocument: 'index.html');
+      cascade = cascade.add(staticHandler);
+      print('Serving static web files from: $webPath');
+    } else {
+      print('Warning: Web directory not found. Web clients will not be served. Ensure the "web" directory is copied next to your executable.');
     }
 
     final handler = const Pipeline()

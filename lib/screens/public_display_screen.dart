@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '../services/local_server_service.dart';
 import '../providers/session_state_provider.dart';
 import '../providers/app_state_provider.dart';
 import '../theme/app_theme.dart';
@@ -338,7 +340,13 @@ class _PublicDisplayScreenState extends ConsumerState<PublicDisplayScreen> {
   }
 
   Widget _buildJoinInfo() {
-    // We could use a QR code library here, but a placeholder or text is fine for now
+    final server = ref.watch(localServerProvider);
+    final connectedHostIp = ref.watch(clientHostIpProvider);
+    
+    final serverIp = server.isRunning 
+        ? server.ipAddress 
+        : (connectedHostIp != null ? connectedHostIp : null);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -348,17 +356,30 @@ class _PublicDisplayScreenState extends ConsumerState<PublicDisplayScreen> {
         ),
         const SizedBox(height: 6),
         const Text(
-          'Connect to the Wi-Fi and open this link to request songs and send reactions!',
+          'Scan the QR code to request songs and send reactions!',
           style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
         ),
         const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: AppTheme.bgDark, borderRadius: BorderRadius.circular(8)),
-          child: const Center(
-            child: Icon(Icons.qr_code_2, size: 60, color: Colors.white),
+        if (serverIp != null)
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+            child: Center(
+              child: QrImageView(
+                data: 'http://$serverIp:8080',
+                version: QrVersions.auto,
+                size: 150.0,
+              ),
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: AppTheme.bgDark, borderRadius: BorderRadius.circular(8)),
+            child: const Center(
+              child: Icon(Icons.qr_code_2, size: 60, color: Colors.white),
+            ),
           ),
-        ),
       ],
     );
   }
