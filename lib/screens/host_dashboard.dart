@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -13,6 +14,7 @@ import '../models/song.dart';
 import '../models/library_song.dart';
 import '../models/app_user.dart';
 import '../providers/settings_provider.dart';
+import '../providers/host_security_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/gradient_text.dart';
 import '../widgets/song_library.dart';
@@ -1471,6 +1473,63 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                           size: 90.0,
                         ),
                       ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text('Co-Host Access', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.bgInput,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.border),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Host PIN Code', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                              Text('Share this 4-digit code with trusted Co-Hosts', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        SelectableText(
+                          ref.watch(hostSecurityProvider).pin,
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 4, color: AppTheme.accentPink),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: AppTheme.border, height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          final token = ref.read(hostSecurityProvider.notifier).generateToken();
+                          final ip = ref.read(localServerProvider).ipAddress ?? 'localhost';
+                          final url = 'http://$ip:8080/?cohost_token=$token';
+                          Clipboard.setData(ClipboardData(text: url));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('One-Time Link copied to clipboard! (It expires after 1 use)'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.link),
+                        label: const Text('Copy One-Time Link'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.bgDark,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

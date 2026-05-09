@@ -13,6 +13,7 @@ import '../models/song.dart';
 import 'youtube_service.dart';
 import 'smule_service.dart';
 import '../providers/settings_provider.dart';
+import '../providers/host_security_provider.dart';
 
 class LocalServerService {
   final Ref ref;
@@ -201,6 +202,19 @@ class LocalServerService {
       // Note: We're setting the end time directly via the native method
       ref.read(sessionStateProvider.notifier).setCountdownNatively(endTimeMs);
       return Response.ok('{"status":"ok"}', headers: {'Content-Type': 'application/json'});
+    });
+
+    // POST /verify-host
+    app.post('/verify-host', (Request request) async {
+      try {
+        final payload = await request.readAsString();
+        final data = jsonDecode(payload);
+        final input = data['code'];
+        final isValid = ref.read(hostSecurityProvider.notifier).verifyPinOrToken(input);
+        return Response.ok(jsonEncode({'valid': isValid}), headers: {'Content-Type': 'application/json'});
+      } catch (e) {
+        return Response.internalServerError(body: 'Failed to verify host: $e');
+      }
     });
 
     app.get('/local-media', (Request request) {

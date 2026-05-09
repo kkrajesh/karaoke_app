@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -135,6 +137,72 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Future<bool> _verifyHostCode(String code) async {
+    if (kIsWeb || ref.read(clientHostIpProvider) != null) {
+      try {
+        final ip = ref.read(clientHostIpProvider) ?? Uri.base.host;
+        final baseUrl = ip.isNotEmpty ? 'http://$ip:8080' : '';
+        final response = await http.post(
+          Uri.parse('$baseUrl/verify-host'),
+          body: jsonEncode({'code': code}),
+          headers: {'Content-Type': 'application/json'},
+        );
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return data['valid'] == true;
+        }
+      } catch (e) {
+        print('Error verifying host code: $e');
+      }
+      return false;
+    }
+    return true; // Native host bypassing
+  }
+
+  Future<String?> _showPinDialog() async {
+    final pinController = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Co-Host Access'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Please enter the 4-digit Host PIN.'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: pinController,
+                keyboardType: TextInputType.number,
+                obscureText: true,
+                maxLength: 4,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 24, letterSpacing: 8),
+                decoration: const InputDecoration(
+                  counterText: '',
+                  hintText: '****',
+                ),
+                autofocus: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, null),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, pinController.text.trim()),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentPurple),
+              child: const Text('Verify'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildCompactRoleButton(String title, IconData icon, UserRole role, {bool isJoinScreen = false}) {
     return ElevatedButton.icon(
       icon: Icon(icon, color: Colors.white, size: 20),
@@ -179,6 +247,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SnackBar(content: Text('Please enter your name first')),
             );
             return;
+          }
+        }
+        
+        if (role == UserRole.host && !ref.read(appStateProvider).isPrimaryHost) {
+          final urlToken = Uri.base.queryParameters['cohost_token'];
+          if (urlToken != null) {
+            final isValid = await _verifyHostCode(urlToken);
+            if (!isValid) {
+              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid or expired One-Time Link')));
+              return;
+            }
+          } else {
+            final pin = await _showPinDialog();
+            if (pin == null) return;
+            
+            final isValid = await _verifyHostCode(pin);
+            if (!isValid) {
+              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Incorrect Host PIN')));
+              return;
+            }
           }
         }
         

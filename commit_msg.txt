@@ -1,8 +1,8 @@
-v1.7.0: Host Dashboard Hardening & Sign-In Flow Updates
+v1.8.0: Co-Host Security Features (PIN & One-Time Token)
 
 Features:
-- Host Authority Enforcement: Network & Event config panel is properly hidden for co-hosts based on the 'isPrimaryHost' flag.
-- Dynamic Event Names: Forced date-based generation of event names on app startup instead of using cached SharedPreferences.
-- Public Display Web Fix: Auto-resolve QR code server IP from browser URL (Uri.base.host).
-- Streamlined Sign-In: Combined role selection and login into single-action buttons.
-- Advanced Singer Registration: Collected optional Phone, Email, and Instagram with smart requirement bypassing for audience and host.
+- Dual-Layer Security for Co-Host Role: Access to the Co-Host dashboard from web clients now requires either a 4-digit PIN or a one-time link token.
+- Automatic PIN Generation: A secure 4-digit PIN is randomly generated every time the host application starts.
+- One-Time Links: Hosts can generate a single-use URL link directly from the network config panel to bypass the PIN requirement for trusted guests.
+- Local Server Endpoints: Added a `/verify-host` API endpoint for the web clients to authenticate locally before rendering the dashboard.
+- Documentation: Updated `README.md`, `TaskList.md`, and created a new Walkthrough detailing the security architecture.

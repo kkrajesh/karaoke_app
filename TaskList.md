@@ -72,3 +72,5 @@
     - [x] Song Library/in general the scrolling is not working with my laptop touchpad two finger scroll. (used to work before.)
 
     
+- [x] Please update all MD files with relevant information
+- [x] Please check in all the changes to git with a minor version number update and release notes

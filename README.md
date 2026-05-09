@@ -59,6 +59,7 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
 * [x] **Flipped Dashboards & Multi-Window Mode**: Host can peek at other dashboards (Singer, Audience, Public Display) via in-app fullscreen modals, or pop them out into independent native browser windows with auto-login URL routing.
 * [x] **Streamlined Sign-In**: Combined role selection and login into single-action buttons with automated web QR code host IP resolution.
 * [x] **Advanced Singer Registration**: Enforce collection of phone, email, or Instagram handle for singers, while offering smart bypasses for hosts and audience members.
+* [x] **Co-Host Security**: Secure the Host role with an automatically generated 4-digit PIN code and single-use link token generation.
 
 
 ## Getting Started
