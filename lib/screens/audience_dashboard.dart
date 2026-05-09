@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_theme.dart';
 import '../widgets/gradient_text.dart';
 import '../providers/session_state_provider.dart';
+import '../providers/app_state_provider.dart';
 import '../models/song.dart';
 import '../models/library_song.dart';
 import '../widgets/song_library.dart';
@@ -72,6 +73,8 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
   }
 
   void _requestSong(LibrarySong librarySong) {
+    final user = ref.read(appStateProvider).user;
+    final requesterNameController = TextEditingController(text: user?.name ?? '');
     final requestedForController = TextEditingController();
     final dedicationController = TextEditingController();
 
@@ -85,6 +88,11 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
             children: [
               Text('Requesting "${librarySong.title}"'),
               const SizedBox(height: 16),
+              TextField(
+                controller: requesterNameController,
+                decoration: const InputDecoration(labelText: 'Your Name (Requester)', hintText: 'Who is making this request?'),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: requestedForController,
                 decoration: const InputDecoration(labelText: 'Who should sing it?', hintText: 'e.g., John, The Host, or "Anyone"'),
@@ -109,8 +117,8 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
                   title: librarySong.title,
                   videoId: librarySong.videoId,
                   isLocal: librarySong.source == 'local',
-                  requestedBy: 'audience',
-                  requestedByName: 'Audience Member',
+                  requestedBy: user?.id ?? 'audience',
+                  requestedByName: requesterNameController.text.trim().isEmpty ? 'Audience Member' : requesterNameController.text.trim(),
                   addedAt: DateTime.now(),
                   isRequest: true,
                   requestedFor: requestedForController.text.trim().isEmpty ? 'Anyone' : requestedForController.text.trim(),

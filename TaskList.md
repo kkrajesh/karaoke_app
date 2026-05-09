@@ -24,7 +24,7 @@
 
     - [] audience display
         - [x] make the Audience reaction section a reusable component and make it available in host and singer pages 
-        - [] when requesting song ask for their name as well, prefill it if they already supplied when the started. Make the same info available to the host request queue
+        - [x] when requesting song ask for their name as well, prefill it if they already supplied when the started. Make the same info available to the host request queue
     
 
     - [] Starting Page

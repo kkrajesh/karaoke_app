@@ -1,8 +1,5 @@
-v1.8.0: Co-Host Security Features (PIN & One-Time Token)
+feat: Add requester name field to audience song requests
 
-Features:
-- Dual-Layer Security for Co-Host Role: Access to the Co-Host dashboard from web clients now requires either a 4-digit PIN or a one-time link token.
-- Automatic PIN Generation: A secure 4-digit PIN is randomly generated every time the host application starts.
-- One-Time Links: Hosts can generate a single-use URL link directly from the network config panel to bypass the PIN requirement for trusted guests.
-- Local Server Endpoints: Added a `/verify-host` API endpoint for the web clients to authenticate locally before rendering the dashboard.
-- Documentation: Updated `README.md`, `TaskList.md`, and created a new Walkthrough detailing the security architecture.
+- Updated the audience dashboard song request dialog to prompt for the requester's name.
+- Pre-filled the requester name field with the user's profile name if available.
+- Updated the song creation logic to pass the submitted requester name to the host request queue, allowing hosts to see who specifically requested a song instead of a generic "Audience Member" label.
