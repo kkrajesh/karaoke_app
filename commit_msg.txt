@@ -1,5 +1,0 @@
-feat: Add requester name field to audience song requests
-
-- Updated the audience dashboard song request dialog to prompt for the requester's name.
-- Pre-filled the requester name field with the user's profile name if available.
-- Updated the song creation logic to pass the submitted requester name to the host request queue, allowing hosts to see who specifically requested a song instead of a generic "Audience Member" label.

@@ -7,6 +7,7 @@ import '../models/song.dart';
 import '../providers/app_state_provider.dart';
 import '../services/ai_service.dart';
 import '../services/google_sheets_service.dart';
+import '../providers/settings_provider.dart';
 
 class SessionState {
   final List<Song> queue;
@@ -86,6 +87,8 @@ class SessionStateNotifier extends Notifier<SessionState> {
   Timer? _pollTimer;
   Timer? _sheetsSyncTimer;
   Timer? _countdownClearTimer;
+  Timer? _aiQueueTimer;
+  final Set<String> _generatingTriviaIds = {};
 
   bool get _isClient => kIsWeb || ref.read(clientHostIpProvider) != null;
   String get _baseUrl {
@@ -101,12 +104,15 @@ class SessionStateNotifier extends Notifier<SessionState> {
     
     if (_isClient) {
       _startPolling();
+    } else {
+      _startAiQueueProcessor();
     }
     
     ref.onDispose(() {
       _pollTimer?.cancel();
       _sheetsSyncTimer?.cancel();
       _countdownClearTimer?.cancel();
+      _aiQueueTimer?.cancel();
     });
     
     return SessionState();
@@ -118,6 +124,73 @@ class SessionStateNotifier extends Notifier<SessionState> {
     });
     // Fetch immediately
     _fetchStateFromServer();
+  }
+
+  void _startAiQueueProcessor() {
+    _aiQueueTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _processAiQueue();
+    });
+  }
+
+  Future<void> _processAiQueue() async {
+    if (_isClient || !ref.read(settingsProvider).aiEnabled) return;
+    
+    final activeQueue = state.queue.where((s) => !s.isRequest).toList();
+    // Only care about top 3
+    final topSongs = activeQueue.take(3).toList();
+    
+    for (final song in topSongs) {
+      if (song.aiTrivia == null && !_generatingTriviaIds.contains(song.id)) {
+        _generatingTriviaIds.add(song.id);
+        
+        try {
+          final aiService = ref.read(aiServiceProvider);
+          final trivia = await aiService.generateAiTrivia(song);
+          
+          final idx = state.queue.indexWhere((s) => s.id == song.id);
+          if (idx != -1) {
+             final newQueue = List<Song>.from(state.queue);
+             newQueue[idx] = newQueue[idx].copyWith(aiTrivia: trivia);
+             state = state.copyWith(queue: newQueue);
+          }
+        } catch (e) {
+          print('Error generating AI Trivia: $e');
+        } finally {
+          _generatingTriviaIds.remove(song.id);
+        }
+      }
+    }
+  }
+
+  Future<void> regenerateAiTrivia(String songId, String customPrompt) async {
+    if (_isClient) return; // Hosted only for now
+    
+    final idx = state.queue.indexWhere((s) => s.id == songId);
+    if (idx == -1) return;
+    
+    final song = state.queue[idx];
+    if (_generatingTriviaIds.contains(songId)) return;
+    
+    _generatingTriviaIds.add(songId);
+    
+    // Clear existing to show loading in UI
+    final newQueue = List<Song>.from(state.queue);
+    newQueue[idx] = newQueue[idx].copyWith(aiTrivia: 'Generating...');
+    state = state.copyWith(queue: newQueue);
+    
+    try {
+      final aiService = ref.read(aiServiceProvider);
+      final trivia = await aiService.generateAiTrivia(song, customPrompt: customPrompt);
+      
+      final finalIdx = state.queue.indexWhere((s) => s.id == songId);
+      if (finalIdx != -1) {
+         final finalQueue = List<Song>.from(state.queue);
+         finalQueue[finalIdx] = finalQueue[finalIdx].copyWith(aiTrivia: trivia);
+         state = state.copyWith(queue: finalQueue);
+      }
+    } finally {
+      _generatingTriviaIds.remove(songId);
+    }
   }
 
   Future<void> _fetchStateFromServer() async {
@@ -353,11 +426,11 @@ class SessionStateNotifier extends Notifier<SessionState> {
       });
     }
 
-    // Fetch the fun fact asynchronously
-    final aiService = ref.read(aiServiceProvider);
-    final fact = await aiService.generateHostFact(nextSong, upNext);
+    // Set the fun fact immediately if it was pre-generated
+    final fact = nextSong.aiTrivia != null && nextSong.aiTrivia != 'Generating...' 
+        ? nextSong.aiTrivia 
+        : "🎤 Currently singing: ${nextSong.displaySingerName}\n\n🤖 AI Info:\nNo AI trivia generated yet or generation in progress.";
     
-    // Check if the song hasn't changed while we were fetching
     if (state.nowPlaying?.id == nextSong.id) {
       state = state.copyWith(funFact: fact);
     }

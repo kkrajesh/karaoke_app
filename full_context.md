@@ -60,8 +60,11 @@ The Host boots up a background `shelf` server upon startup in `HostDashboard`. I
 ## 4. AI Teleprompter Service (`AiService`)
 
 The Host includes an integrated AI Teleprompter (`AiService`) to generate live facts and introductory scripts for the host.
-When the queue advances, the `SessionStateNotifier` queries the AI Service with the current song and upcoming singer data.
-This generates a contextual fun fact which is synced across the network and displayed exclusively on the `HostDashboard`.
+This is implemented as an **Ahead-of-Time (AOT)** pipeline:
+1. **Background Processing**: `SessionStateNotifier` runs a background task that watches the queue. When it detects songs in the top 3 spots without AI trivia, it initiates background generation.
+2. **Key-less Web Scraping**: The service cleans the song title via the local LLM, then silently scrapes Wikipedia REST API and DuckDuckGo HTML search for real-world context without requiring paid API keys.
+3. **Local LLM Generation**: The scraped context is fed into a local, user-configured LLM (e.g., LM Studio at `http://localhost:1234` or Ollama) to generate a full Markdown table, scene context, and a punchy 2-sentence Host Intro.
+4. **UI Integration**: The Host can view the generated Markdown ahead of time via a dialog in the queue list, provide fine-tuning prompts to regenerate it, and ultimately read the perfectly-formatted `flutter_markdown` result on the teleprompter when the song begins.
 
 ---
 

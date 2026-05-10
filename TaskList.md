@@ -37,6 +37,10 @@
         - [x] Combine role choice and join party buttons into single action buttons on the home screen.
        
 
+- [x] AI Features
+    - [x] AI Teleprompter to help prepare intro message for each singer and song - use local LLM for the base generation and web search to get the latest song information
+    - [x] AI to generate song trivia and fun facts for current song - use local LLM for the base generation and web search to get the latest song information
+
 - [] Smule (Blocked by Cloudflare - Requires Headless Browser proxy / Option 3)
     - [] Add smule searching and make available for the singers to select and add to queue
     - [] Add smule to the list of sources for the public display
@@ -70,7 +74,20 @@
 - Bug Fixes
     - [x] Fix the issue where the public display is not updating when the current song changes
     - [x] Song Library/in general the scrolling is not working with my laptop touchpad two finger scroll. (used to work before.)
-
+    - [] Android app
+        - [] Song Library - 
+        - [] Fix bugs
     
-- [x] Please update all MD files with relevant information
-- [x] Please check in all the changes to git with a minor version number update and release notes
+- Git Repo
+    - [x] Please make sure that all the changes are checked into git 
+    - [x] Please update all MD files with relevant information
+    - [x] Please check in all the changes to git with a major version number update and release notes   
+
+
+- Build & Deployment
+    - [x] please ask if you need any clarifications and I will get back to you with answers
+    - [x] build windows - flutter build windows --release 
+    - [x] build android apk - flutter build apk --release
+    - [x] build web - flutter build web --release
+    - [x] Copy the builds to a shared drive (C:\Data\Rajesh\Dev\Executables\KaraokeHost) so I can pick them up from other machines for testing
+        - [x] make sure the web build is copied to same directory where the windows executables are stored for easy testing of all builds. 

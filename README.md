@@ -29,7 +29,7 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
 * [x] Queue management - reorder singer, remove singer, approve requests
 * [x] Display logo, song title, singer name (Audience View)
 * [x] AI Teleprompter to help prepare intro message for each singer and song
-* [x] AI to generate song trivia and fun facts for current song
+* [x] AI to generate song trivia and fun facts for current song (Utilizes Local LLM + Web Scraping)
 * [x] Audience can select songs from library as a request (Host will review and add to queue). 
     * [x] Ability to nudge request to up or down the queue. 
     * [x] Ability to delete requests. 
@@ -60,6 +60,7 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
 * [x] **Streamlined Sign-In**: Combined role selection and login into single-action buttons with automated web QR code host IP resolution.
 * [x] **Advanced Singer Registration**: Enforce collection of phone, email, or Instagram handle for singers, while offering smart bypasses for hosts and audience members.
 * [x] **Co-Host Security**: Secure the Host role with an automatically generated 4-digit PIN code and single-use link token generation.
+* [x] **AI Teleprompter & Song Trivia**: Generate a 2-sentence host intro and detailed markdown trivia for upcoming songs natively via local LLM integrations (like LM Studio or Ollama) combined with background Wikipedia & DuckDuckGo scraping.
 
 
 ## Getting Started
@@ -81,6 +82,13 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
    flutter run -d windows
    ```
    *Note: Ensure your Windows Firewall allows the app to communicate on port 8080.*
+
+### AI Teleprompter & Trivia Setup (Optional)
+To use the AI Teleprompter and Song Trivia features, you must have a local LLM running.
+1. Download and install [LM Studio](https://lmstudio.ai/) or [Ollama](https://ollama.com/).
+2. Download an instruct-tuned model (e.g., `Llama 3 8B Instruct` or `Mistral`).
+3. Start the Local Inference Server in LM Studio (typically runs on `http://localhost:1234`).
+4. In the Karaoke Host Dashboard, go to **Settings > Network & Event Config > AI Teleprompter & Trivia**, enable the feature, select your provider, and enter your Local Server URL. The app will automatically generate markdown tables and host intros in the background for queued songs!
 
 ### How to Use
 

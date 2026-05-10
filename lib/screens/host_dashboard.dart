@@ -4,8 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'player_screen.dart';
 import '../services/local_server_service.dart';
 import '../providers/session_state_provider.dart';
@@ -455,9 +454,16 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
     final funFact = ref.watch(sessionStateProvider).funFact;
     if (funFact == null) return const Center(child: Text('No teleprompter info available.'));
     return SingleChildScrollView(
-      child: Text(
-        funFact,
-        style: const TextStyle(fontSize: 16, height: 1.5, color: Colors.white),
+      child: MarkdownBody(
+        data: funFact,
+        styleSheet: MarkdownStyleSheet(
+          p: const TextStyle(fontSize: 16, height: 1.5, color: Colors.white),
+          h3: const TextStyle(color: AppTheme.accentPurpleLight, fontWeight: FontWeight.bold, fontSize: 22),
+          tableHead: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.accentPink, fontSize: 16),
+          tableBody: const TextStyle(color: Colors.white70, fontSize: 16),
+          tableBorder: TableBorder.all(color: AppTheme.border),
+          listBullet: const TextStyle(fontSize: 16, color: Colors.white),
+        ),
       ),
     );
   }
@@ -503,16 +509,19 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            funFact,
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12,
-              height: 1.3,
-              color: Colors.white,
+          const SizedBox(height: 8),
+          if (funFact.isNotEmpty)
+            MarkdownBody(
+              data: funFact,
+              styleSheet: MarkdownStyleSheet(
+                p: const TextStyle(fontSize: 12, height: 1.3, color: Colors.white),
+                h3: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.accentPurpleLight),
+                tableBody: const TextStyle(fontSize: 12, color: Colors.white70),
+                tableHead: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.accentPink),
+                tableBorder: TableBorder.all(color: AppTheme.border),
+                listBullet: const TextStyle(fontSize: 12, color: Colors.white),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -785,7 +794,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.of(context).pop(),
                   child: const Text('Close'),
                 ),
               ],
@@ -793,6 +802,66 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
           },
         );
       },
+    );
+  }
+
+  void _showAiTriviaDialog(Song song) {
+    String customPrompt = '';
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('AI Trivia: ${song.title}'),
+        content: SizedBox(
+          width: 800,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (song.aiTrivia != null)
+                  MarkdownBody(
+                    data: song.aiTrivia!,
+                    styleSheet: MarkdownStyleSheet(
+                      p: const TextStyle(color: Colors.white),
+                      h3: const TextStyle(color: AppTheme.accentPurpleLight, fontWeight: FontWeight.bold, fontSize: 18),
+                      tableHead: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.accentPink),
+                      tableBody: const TextStyle(color: Colors.white70),
+                      tableBorder: TableBorder.all(color: AppTheme.border),
+                    ),
+                  )
+                else
+                  const Center(child: Text('No trivia available. It may be currently generating.', style: TextStyle(color: AppTheme.textMuted))),
+                const SizedBox(height: 24),
+                const Text('Fine-tune (Optional):', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextField(
+                  onChanged: (val) => customPrompt = val,
+                  decoration: const InputDecoration(
+                    labelText: 'Fine-tune Instruction',
+                    hintText: 'e.g. Focus on the choreography',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.refresh),
+            label: const Text('Regenerate'),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentPurple),
+            onPressed: () {
+              ref.read(sessionStateProvider.notifier).regenerateAiTrivia(song.id, customPrompt);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Regenerating AI trivia in the background...')));
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -829,6 +898,13 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
               padding: const EdgeInsets.all(8),
               onPressed: () => ref.read(sessionStateProvider.notifier).swapDuetSingers(song.id),
             ),
+          IconButton(
+            icon: const Icon(Icons.psychology, color: AppTheme.accentPurple, size: 20),
+            constraints: const BoxConstraints(),
+            padding: const EdgeInsets.all(8),
+            onPressed: () => _showAiTriviaDialog(song),
+            tooltip: 'View AI Trivia',
+          ),
           IconButton(
             icon: const Icon(Icons.edit_note, color: Colors.white70, size: 20),
             constraints: const BoxConstraints(),
@@ -1530,6 +1606,59 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                         ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text('AI Teleprompter & Trivia', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.bgInput,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.border),
+                ),
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      title: const Text('Enable AI Features', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      subtitle: const Text('Generates intro scripts and fun facts via Local LLM.', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                      value: settings.aiEnabled,
+                      activeColor: AppTheme.accentPurple,
+                      onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings(aiEnabled: val),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    if (settings.aiEnabled) ...[
+                      const Divider(color: AppTheme.border, height: 24),
+                      DropdownButtonFormField<String>(
+                        value: settings.llmProvider,
+                        decoration: const InputDecoration(labelText: 'Local LLM Provider'),
+                        items: ['LM Studio', 'Ollama'].map((String p) {
+                          return DropdownMenuItem<String>(value: p, child: Text(p));
+                        }).toList(),
+                        onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings(llmProvider: val),
+                        dropdownColor: AppTheme.bgDark,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        initialValue: settings.llmUrl,
+                        decoration: const InputDecoration(labelText: 'LLM URL (e.g. http://localhost:1234)'),
+                        onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings(llmUrl: val),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        initialValue: settings.llmModel,
+                        decoration: const InputDecoration(labelText: 'Model Name (e.g. local-model)'),
+                        onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings(llmModel: val),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        initialValue: settings.aiLanguages,
+                        decoration: const InputDecoration(labelText: 'Target Languages (Comma separated)'),
+                        onChanged: (val) => ref.read(settingsProvider.notifier).updateSettings(aiLanguages: val),
+                      ),
+                    ],
                   ],
                 ),
               ),
