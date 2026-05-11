@@ -14,6 +14,7 @@
     - [] Song Library
         - [x] make the previews open in a popup instead of expanding, but give an option for expanding the popup.
         - [x] for non-loal files give an option to preview it in browser directly
+        - [] make sure to add a an option to popup the song library conponenet all dashboards it is present, just like it is on the host screen now.
 
 
     - [] Public Display
@@ -40,6 +41,12 @@
 - [x] AI Features
     - [x] AI Teleprompter to help prepare intro message for each singer and song - use local LLM for the base generation and web search to get the latest song information
     - [x] AI to generate song trivia and fun facts for current song - use local LLM for the base generation and web search to get the latest song information
+    - [] need to make the Host Intro section more creative and randomness, not the same format all the time; can the agent definition include options that can be toggled on and off to control the creativity and randomness of the intro message? how can this be controlled from the app settings page?
+    - [] can all the agent definition prompts be included in a way that they can be edited in the app settings page? and can the LLM prompt be dynamically edited based on the settings? Is it possible to edit the config file directly in the file system and have the app pick up the changes, in addition to providing an option in the app settings page?
+    - [] add voice announcement of the host prompts using AI voice, ideally training an AI voice on my voice.
+        - [] Ideally using local LLM and model
+        - [] If local is not possible, use an AI voice service. If so, try to provide local LLM option in settings page.
+        - [] Provide ability to turn this feature on and off 
 
 - [] Smule (Blocked by Cloudflare - Requires Headless Browser proxy / Option 3)
     - [] Add smule searching and make available for the singers to select and add to queue
@@ -69,6 +76,8 @@
     - [] Log the word cloud generated during the performance in a separate tab
     - [] Log the trivia generated during the performance in a separate tab
     - [x] add the right prefix for the youtube link for song URL
+    - [] add the ai generated content in the google sheets log in a separate tab witht he song title as first column so that it can be later used when LLM calls are not required. Provide option to refresh the AI generated content when needed.
+    - [] Add a separete sheet to log all the unique singers with information about them(including the contact information).
     
 
 - Bug Fixes
@@ -77,17 +86,18 @@
     - [] Android app
         - [] Song Library - 
         - [] Fix bugs
+            - [x] the built app testing using bluestacks is not working properly. I think it is not connecting. I can provide screen shots if that helps
     
 - Git Repo
     - [x] Please make sure that all the changes are checked into git 
     - [x] Please update all MD files with relevant information
-    - [x] Please check in all the changes to git with a major version number update and release notes   
+    - [x] Please check in all the changes to git with a minor version number update and release notes   
 
 
 - Build & Deployment
-    - [x] please ask if you need any clarifications and I will get back to you with answers
-    - [x] build windows - flutter build windows --release 
-    - [x] build android apk - flutter build apk --release
-    - [x] build web - flutter build web --release
-    - [x] Copy the builds to a shared drive (C:\Data\Rajesh\Dev\Executables\KaraokeHost) so I can pick them up from other machines for testing
-        - [x] make sure the web build is copied to same directory where the windows executables are stored for easy testing of all builds. 
+    - [] please ask if you need any clarifications and I will get back to you with answers
+    - [] build windows - flutter build windows --release 
+    - [] build android apk - flutter build apk --release
+    - [] build web - flutter build web --release
+    - [] Copy the builds to a shared drive (C:\Data\Rajesh\Dev\Executables\KaraokeHost) so I can pick them up from other machines for testing
+        - [] make sure the web build is copied to same directory where the windows executables are stored for easy testing of all builds. 

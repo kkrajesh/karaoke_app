@@ -11,6 +11,7 @@ import '../providers/app_state_provider.dart';
 import '../models/song.dart';
 import 'package:video_player/video_player.dart';
 import '../theme/app_theme.dart';
+import 'dart:io' show Platform;
 
 class PlayerScreen extends ConsumerStatefulWidget {
   final Song? song;
@@ -39,7 +40,12 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
     if (!kIsWeb) {
       _nativePlayer = Player();
-      _nativeController = VideoController(_nativePlayer!);
+      _nativeController = VideoController(
+        _nativePlayer!, 
+        configuration: VideoControllerConfiguration(
+          enableHardwareAcceleration: Platform.isWindows,
+        ),
+      );
     }
     
     if (widget.song != null) {
@@ -112,8 +118,14 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         final smuleService = ref.read(smuleServiceProvider);
         streamUrl = await smuleService.getMediaUrl(song.videoId);
       } else if (song.isLocal) {
-        // Convert backslashes to forward slashes for libmpv, avoiding percent-encoding issues
-        streamUrl = song.videoId.replaceAll('\\', '/');
+        final clientIp = ref.read(clientHostIpProvider);
+        if (clientIp != null) {
+          // Client: stream from host
+          streamUrl = 'http://$clientIp:8080/local-media?path=${Uri.encodeComponent(song.videoId)}';
+        } else {
+          // Host: play directly, converting slashes for libmpv
+          streamUrl = song.videoId.replaceAll('\\', '/');
+        }
       } else {
         final ytService = ref.read(youtubeServiceProvider);
         streamUrl = await ytService.getVideoStreamUrl(song.videoId);

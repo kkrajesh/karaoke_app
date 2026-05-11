@@ -66,22 +66,56 @@ Turn any Windows computer into a central Karaoke Host, and allow anyone on your 
 ## Getting Started
 
 ### Prerequisites
-* Flutter SDK (with Web and Windows support enabled)
+* Flutter SDK (with Web, Windows, and Android support enabled)
 * A Windows machine (to run the Host application)
 
-### Initial Setup
+### Compilation & Deployment
 
-1. **Build the Web Client**
-   Because the Windows app serves the Web application from its `build/web` directory, you must compile the web client first!
-   ```bash
-   flutter build web
-   ```
+The Karaoke App consists of three different platform builds that work together:
 
-2. **Run the Host on Windows**
-   ```bash
-   flutter run -d windows
-   ```
-   *Note: Ensure your Windows Firewall allows the app to communicate on port 8080.*
+#### 1. Build the Web Client (Required First)
+Because the Windows app serves the Web application from its `build/web` directory, you **must** compile the web client first!
+```bash
+flutter build web --release
+```
+
+#### 2. Run the Host on Windows
+To run the primary Host application (which acts as the server):
+```bash
+flutter run -d windows
+# OR compile it to an executable:
+# flutter build windows --release
+```
+*Note: Ensure your Windows Firewall allows the app to communicate on port `8080` (Private and Public networks).*
+
+#### 3. Run the Android App (For Tablets/TVs)
+The Android app connects to the Host just like the Web client, but avoids browser video limitations.
+
+**Deploying to a Physical Android Device:**
+Connect your device and run:
+```bash
+flutter run -d <device_id>
+```
+
+**Deploying to Android Studio Emulators (AVD):**
+Launch an AVD (e.g., Pixel 5) and run:
+```bash
+flutter run
+```
+
+**Deploying to Bluestacks (or other x86 Emulators):**
+Modern Flutter drops developer support for 32-bit x86 architectures. Because of this, `flutter run` will show Bluestacks as `unsupported`. Instead, you must build the release APK (which contains ARM translations) and install it manually via ADB or drag-and-drop:
+```bash
+# 1. Build the APK
+flutter build apk --release
+
+# 2. Connect to Bluestacks ADB (Enable ADB in Bluestacks Settings first)
+adb connect 127.0.0.1:5555
+
+# 3. Install the APK
+adb install -r build\app\outputs\flutter-apk\app-release.apk
+```
+*Troubleshooting Bluestacks Video:* Bluestacks lacks physical hardware decoders, which causes YouTube video textures to render as a black screen (while audio still plays). Local media files will stream perfectly. For full YouTube video support, use a physical Android device or an official Android Studio AVD.
 
 ### AI Teleprompter & Trivia Setup (Optional)
 To use the AI Teleprompter and Song Trivia features, you must have a local LLM running.

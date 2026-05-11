@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/song.dart';
+import '../models/ai_prompts_config.dart';
 import '../providers/settings_provider.dart';
 
 class AiService {
@@ -9,7 +12,7 @@ class AiService {
   
   AiService(this.ref);
 
-  Future<String?> _callLlm(String url, String model, List<Map<String, String>> messages) async {
+  Future<String?> _callLlm(String url, String model, List<Map<String, String>> messages, double temperature) async {
     try {
       final response = await http.post(
         Uri.parse('$url/v1/chat/completions'),
@@ -17,7 +20,7 @@ class AiService {
         body: jsonEncode({
           'model': model,
           'messages': messages,
-          'temperature': 0.7,
+          'temperature': temperature,
         }),
       );
       if (response.statusCode == 200) {
@@ -32,17 +35,32 @@ class AiService {
     return null;
   }
 
+  Future<AiPromptsConfig> _getPromptsConfig(AppSettings settings) async {
+    try {
+      final dbDir = p.dirname(settings.mmdbPath);
+      final file = File(p.join(dbDir, 'ai_prompts.json'));
+      if (await file.exists()) {
+        final content = await file.readAsString();
+        return AiPromptsConfig.fromJson(content);
+      } else {
+        final config = AiPromptsConfig.defaultConfig();
+        await file.writeAsString(config.toJson());
+        return config;
+      }
+    } catch (e) {
+      print('Error reading ai_prompts.json: $e');
+      return AiPromptsConfig.defaultConfig();
+    }
+  }
+
   Future<Map<String, String>?> _standardizeSong(String rawTitle, AppSettings settings) async {
-    final systemPrompt = '''You are a strict data extraction assistant.
-You will be given a raw song/video title. 
-Extract the actual song title, the primary artist/movie, and the likely language from this list: ${settings.aiLanguages}.
-Reply ONLY with a raw JSON object (no markdown, no backticks).
-Format: {"title": "Clean Song Title", "artist": "Artist Name", "language": "Language"}''';
+    final config = await _getPromptsConfig(settings);
+    final systemPrompt = config.standardizationSystemPrompt.replaceAll('{{languages}}', settings.aiLanguages);
 
     final result = await _callLlm(settings.llmUrl, settings.llmModel, [
       {'role': 'system', 'content': systemPrompt},
       {'role': 'user', 'content': 'Raw Title: "$rawTitle"'}
-    ]);
+    ], config.temperature);
 
     if (result != null) {
       try {
@@ -128,49 +146,22 @@ Search Snippets:
 $ddgContext
 '''.trim();
 
+    final config = await _getPromptsConfig(settings);
+
     // Step 3: Final Generation
-    final systemPrompt = '''You are a musical historian and an energetic karaoke host AI assistant.
-Your job is to generate a comprehensive markdown document about a song based on the provided context.
-Output exactly this markdown format:
+    final systemPrompt = config.triviaSystemPrompt;
 
-### Host Intro
-(Write a fun, punchy 2-sentence intro to hype up the audience. Announce the upcoming singer by name and the song they are singing. Sprinkle in an interesting trivia fact about the song to make it engaging!)
-
-### Song Details
-| Field | Details |
-|---|---|
-| Title | ... |
-| Movie/Album | ... |
-| Year | ... |
-| Singers | ... |
-| Main Actors | ... |
-| Composer | ... |
-| Lyricist | ... |
-| Raaga | ... |
-
-### Scene / Plot Context
-(Write a paragraph describing the movie scene or the story/theme behind the song)
-
-### Trivia & Anecdotes
-- (Bullet point 1)
-- (Bullet point 2)
-- (Bullet point 3)
-
-Fill in the table with "Unknown" if the information is not present in the context.
-Do NOT output anything other than the markdown requested.''';
-
-    final userPrompt = '''
-Upcoming Singer: ${song.displaySingerName}
-Current Song: "$title" by $artist
-${customPrompt != null && customPrompt.isNotEmpty ? '\nSpecial Instructions: $customPrompt\n' : ''}
-Background Context:
-$combinedContext
-''';
+    final userPrompt = config.triviaUserPromptTemplate
+        .replaceAll('{{singer}}', song.displaySingerName)
+        .replaceAll('{{title}}', title)
+        .replaceAll('{{artist}}', artist)
+        .replaceAll('{{custom_prompt}}', customPrompt != null && customPrompt.isNotEmpty ? 'Special Instructions: $customPrompt' : '')
+        .replaceAll('{{context}}', combinedContext);
 
     final finalScript = await _callLlm(settings.llmUrl, settings.llmModel, [
       {'role': 'system', 'content': systemPrompt},
       {'role': 'user', 'content': userPrompt}
-    ]);
+    ], config.temperature);
 
     if (finalScript != null && finalScript.isNotEmpty) {
       return finalScript;

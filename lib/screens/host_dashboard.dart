@@ -21,6 +21,7 @@ import '../widgets/reaction_pad.dart';
 import 'singer_dashboard.dart';
 import 'audience_dashboard.dart';
 import 'public_display_screen.dart';
+import 'ai_prompts_config_widget.dart';
 
 class HostDashboard extends ConsumerStatefulWidget {
   const HostDashboard({super.key});
@@ -723,6 +724,8 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                   _buildManageLibraryTile(),
                   const SizedBox(height: 12),
                   _buildAppSettingsTile(),
+                  const SizedBox(height: 12),
+                  _buildAiPromptsTile(),
                 ],
               ),
             ),
@@ -1748,6 +1751,32 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: _buildAppSettingsContent(ref),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiPromptsTile() {
+    return Container(
+      decoration: BoxDecoration(color: AppTheme.bgCard, borderRadius: BorderRadius.circular(8)),
+      child: ExpansionTile(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('AI Agent Prompts', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.tealAccent)),
+            IconButton(
+              icon: const Icon(Icons.fullscreen, size: 20),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: () => _showFullscreenDialog('AI Agent Prompts', (c, r) => const SingleChildScrollView(child: Padding(padding: EdgeInsets.all(16.0), child: AiPromptsConfigWidget()))),
+            )
+          ]
+        ),
+        children: const [
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: AiPromptsConfigWidget(),
           ),
         ],
       ),

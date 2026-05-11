@@ -380,10 +380,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 hintText: 'e.g. 192.168.1.5',
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.check, color: AppTheme.accentPurple),
-                  onPressed: () {
-                    final ip = _clientIpController.text.trim();
+                  onPressed: () async {
+                    var ip = _clientIpController.text.trim();
+                    ip = ip.replaceAll(RegExp(r'^https?://'), '');
+                    ip = ip.replaceAll(RegExp(r'/+$'), '');
+                    ip = ip.replaceAll(RegExp(r':\d+$'), '');
                     if (ip.isNotEmpty) {
                       ref.read(clientHostIpProvider.notifier).setIp(ip);
+                      
+                      // Test the connection immediately and show errors
+                      try {
+                        final testUrl = Uri.parse('http://$ip:8080/display-state');
+                        final response = await http.get(testUrl).timeout(const Duration(seconds: 3));
+                        if (response.statusCode == 200 && mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Connected to Host successfully!'), backgroundColor: Colors.green),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Connection failed: $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
                     }
                   },
                 ),
