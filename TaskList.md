@@ -89,9 +89,9 @@
             - [x] the built app testing using bluestacks is not working properly. I think it is not connecting. I can provide screen shots if that helps
     
 - Git Repo
-    - [x] Please make sure that all the changes are checked into git 
-    - [x] Please update all MD files with relevant information
-    - [x] Please check in all the changes to git with a minor version number update and release notes   
+    - [] Please make sure that all the changes are checked into git 
+    - [] Please update all MD files with relevant information
+    - [] Please check in all the changes to git with a minor version number update and release notes   
 
 
 - Build & Deployment
