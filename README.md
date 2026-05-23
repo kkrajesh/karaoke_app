@@ -13,8 +13,8 @@ The core public-facing application for the Karaoke Ecosystem. It serves as the D
 - **Data**: shared_preferences, http (for backend integrations).
 
 ## 🐛 Known Gaps/Bugs
-- **Search capabilities**: Lacks unified access to the local hard drive via Everything.exe.
-- **Practice Tools Missing**: Currently lacks the pitch visualization and advanced dual-pane LRC lyrics rendering present in `Karaoke_Maker`. (Will be resolved by `vox_player_core` integration).
+- **Search capabilities**: Uses unified `vox_player_core` search. We are currently transitioning away from `es.exe` entirely in favor of a unified MediaMonkey database search (Phase 9 ongoing).
+- **Practice Tools Missing**: Practice tools are available via the `practice_app`. The core player is now migrated to `vox_player_core`.
 
 ## 📦 Install Instructions
 1. Clone the repository.

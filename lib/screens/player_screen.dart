@@ -12,7 +12,7 @@ import '../models/song.dart';
 import 'package:video_player/video_player.dart';
 import '../theme/app_theme.dart';
 import 'dart:io' show Platform;
-
+import 'package:vox_player_core/vox_player_core.dart';
 class PlayerScreen extends ConsumerStatefulWidget {
   final Song? song;
 
@@ -217,7 +217,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
             if (_nativeController != null)
               Video(controller: _nativeController!),
             
-            if (_isLoadingNative || widget.song == null)
+              if (_isLoadingNative || widget.song == null)
               Container(
                 color: Colors.black,
                 child: Center(
@@ -231,6 +231,24 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                   ) : const SizedBox(),
                 ),
               ),
+
+              if (widget.song != null && !widget.song!.isLocal)
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: Builder(
+                    builder: (context) {
+                      final result = VoxSearchResult(
+                        id: widget.song!.id,
+                        title: widget.song!.title,
+                        artist: widget.song!.displaySingerName,
+                        url: widget.song!.videoId,
+                        sourceType: widget.song!.videoId.startsWith('https://www.smule.com') ? 'smule' : 'youtube',
+                      );
+                      return AiQueueButton(result: result, isVisible: true);
+                    },
+                  ),
+                ),
           ],
         ),
       ),
