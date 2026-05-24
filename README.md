@@ -2,6 +2,13 @@
 
 The core public-facing application for the Karaoke Ecosystem. It serves as the DJ/Host dashboard, allowing the user to manage the active song queue, stream high-quality audio/video from YouTube or local files, and display a public Karaoke screen.
 
+## 🚀 Release Notes (v2.3.0)
+- Huge UI Improvements for Host Screen, including single page layout, re-orderable upcoming songs, and quick dashboard flips.
+- AI Features: Teleprompter for host intros and AI generated song trivia.
+- Updated Starting Pages with QR code connect functionality and separate attendee workflows.
+- Improved Song Library previews and browser support.
+- Fixed public display updates and trackpad scrolling issues.
+
 ## 🚀 Current State
 - **Stable**: Robust media playback using the newly integrated `vox_player_core` engine.
 - **Stable**: Natively integrates SQLite tracking for AI Artifacts via `VoxAiTrackingService`.
