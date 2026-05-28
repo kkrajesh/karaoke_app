@@ -2,6 +2,11 @@
 
 The core public-facing application for the Karaoke Ecosystem. It serves as the DJ/Host dashboard, allowing the user to manage the active song queue, stream high-quality audio/video from YouTube or local files, and display a public Karaoke screen.
 
+## 🚀 Release Notes (v2.5.1)
+- Synced `VoxPlayerCore` v0.3.0 core library which fixes massive lifecycle teardown issues and the dual-playback bug for Android instances.
+- Exposed powerful `LyricAgent` bi-directional script capabilities within the player ecosystem.
+- Enabled queue syncing and AI file reprocessing under the hood via the shared framework updates.
+
 ## 🚀 Release Notes (v2.5.0)
 - Fully supported Background Audio Playback on Android devices via `vox_player_core`.
 - Huge UI Improvements for Host Screen, including single page layout, re-orderable upcoming songs, and quick dashboard flips.
