@@ -8,10 +8,16 @@ import 'vox_search_providers.dart';
 final voxSearchProvidersProvider = Provider<List<VoxSearchProvider>>((ref) {
   final ytService = ref.watch(youtubeServiceProvider);
   final smuleService = ref.watch(smuleServiceProvider);
+  final hostIp = ref.watch(clientHostIpProvider);
+
+  String? hostUrl;
+  if (hostIp != null) {
+    hostUrl = 'http://$hostIp:8080';
+  }
 
   return [
     YoutubeVoxSearchProvider(ytService),
-    MediaMonkeySearchProvider(),
+    MediaMonkeySearchProvider(hostUrl: hostUrl),
     SmuleVoxSearchProvider(smuleService),
   ];
 });

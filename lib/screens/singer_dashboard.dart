@@ -58,7 +58,7 @@ class _SingerDashboardState extends ConsumerState<SingerDashboard> {
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: _selectedSong!.title,
       videoId: _selectedSong!.videoId,
-      isLocal: _selectedSong!.source == 'local',
+      isLocal: _selectedSong!.source != 'youtube' && _selectedSong!.source != 'smule',
       requestedBy: user?.id ?? 'unknown',
       requestedByName: _stageNameController.text.trim(),
       duetSingerName: _duetNameController.text.trim().isEmpty ? null : _duetNameController.text.trim(),

@@ -2,6 +2,12 @@
 
 The core public-facing application for the Karaoke Ecosystem. It serves as the DJ/Host dashboard, allowing the user to manage the active song queue, stream high-quality audio/video from YouTube or local files, and display a public Karaoke screen.
 
+## 🚀 Release Notes (v2.6.0)
+- **Host Dashboard UI Redesign**: Transitioned to a clean, highly efficient two-column layout. Eliminated intermediate menus for a smoother Host experience.
+- **Interactive Hover Menus**: Replaced standard Wifi Tooltips with a custom Interactive Hover Overlay, displaying Live Server status, QR code, and a one-click copyable IP address.
+- **Media Playback Fixes**: Resolved local media playback issues by properly classifying alternative sources (like MediaMonkey) to use the native player.
+- **UX Improvements**: Fixed "Add to Queue" closing bug from the Song Library and resolved dialog overflow layout issues.
+
 ## 🚀 Release Notes (v2.5.1)
 - Synced `VoxPlayerCore` v0.3.0 core library which fixes massive lifecycle teardown issues and the dual-playback bug for Android instances.
 - Exposed powerful `LyricAgent` bi-directional script capabilities within the player ecosystem.

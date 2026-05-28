@@ -116,7 +116,7 @@ class _AudienceDashboardState extends ConsumerState<AudienceDashboard> {
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   title: librarySong.title,
                   videoId: librarySong.videoId,
-                  isLocal: librarySong.source == 'local',
+                  isLocal: librarySong.source != 'youtube' && librarySong.source != 'smule',
                   requestedBy: user?.id ?? 'audience',
                   requestedByName: requesterNameController.text.trim().isEmpty ? 'Audience Member' : requesterNameController.text.trim(),
                   addedAt: DateTime.now(),

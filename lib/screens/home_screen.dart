@@ -271,7 +271,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
         
         if (isJoinScreen) {
-          final ip = _clientIpController.text.trim();
+          var ip = _clientIpController.text.trim();
+          ip = ip.replaceAll(RegExp(r'^https?://'), '');
+          ip = ip.replaceAll(RegExp(r'/+$'), '');
+          ip = ip.replaceAll(RegExp(r':\d+$'), '');
           if (ip.isNotEmpty) {
             ref.read(clientHostIpProvider.notifier).setIp(ip);
           }

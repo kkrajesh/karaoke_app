@@ -9,12 +9,16 @@ class SongLibrary extends ConsumerStatefulWidget {
   final String actionLabel;
   final Function(LibrarySong) onSongSelected;
   final LibrarySong? selectedSong;
+  final bool showFilters;
+  final bool hideSmule;
 
   const SongLibrary({
     super.key,
     required this.actionLabel,
     required this.onSongSelected,
     this.selectedSong,
+    this.showFilters = true,
+    this.hideSmule = false,
   });
 
   @override
@@ -25,8 +29,9 @@ class _SongLibraryState extends ConsumerState<SongLibrary> {
   @override
   Widget build(BuildContext context) {
     final searchProviders = ref.watch(voxSearchProvidersProvider);
-    // The AiQueueService notification is handled globally or in AiQueueButton if we want. 
-    // Here we just let AiQueueButton handle the UI.
+    final providers = widget.hideSmule 
+        ? searchProviders.where((p) => p.providerId != 'smule').toList() 
+        : searchProviders;
 
     return Container(
       decoration: BoxDecoration(
@@ -34,7 +39,9 @@ class _SongLibraryState extends ConsumerState<SongLibrary> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: UnifiedSearchUI(
-        providers: searchProviders,
+        providers: providers,
+        defaultFilterKaraoke: true,
+        showFilters: widget.showFilters,
         actionBuilder: (context, result) {
           final isSelected = widget.selectedSong?.id == result.id;
           final isLocalDir = result.sourceType == 'LocalDirectory';

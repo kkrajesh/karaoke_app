@@ -125,6 +125,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
         } else {
           // Host: play directly, converting slashes for libmpv
           streamUrl = song.videoId.replaceAll('\\', '/');
+          if (!streamUrl.startsWith('file:///')) {
+            if (streamUrl.startsWith('/')) {
+              streamUrl = 'file://$streamUrl';
+            } else {
+              streamUrl = 'file:///$streamUrl';
+            }
+          }
         }
       } else {
         final ytService = ref.read(youtubeServiceProvider);

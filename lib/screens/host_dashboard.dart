@@ -135,6 +135,84 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
     }
   }
 
+  void _showPopup(String title, Widget Function(BuildContext) contentBuilder) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: AppTheme.bgCard,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: SizedBox(
+            width: 900,
+            height: MediaQuery.of(context).size.height * 0.85,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                      IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(context)),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: AppTheme.border),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Builder(builder: contentBuilder),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSettingsPopup(WidgetRef ref, {int initialIndex = 0}) {
+    final isPrimaryHost = ref.read(appStateProvider).isPrimaryHost;
+    _showPopup('Host Settings', (dialogContext) {
+      return DefaultTabController(
+        initialIndex: initialIndex,
+        length: isPrimaryHost ? 4 : 3,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TabBar(
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              tabs: [
+                if (isPrimaryHost) const Tab(text: 'Network Config'),
+                const Tab(text: 'Manage Library'),
+                const Tab(text: 'App Settings'),
+                const Tab(text: 'AI Prompts'),
+              ],
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white54,
+              indicatorColor: AppTheme.accentPink,
+              dividerColor: AppTheme.border,
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  if (isPrimaryHost) _buildNetworkConfigContent(ref),
+                  _buildManageLibraryContent(ref),
+                  _buildAppSettingsContent(ref),
+                  const SingleChildScrollView(child: Padding(padding: EdgeInsets.all(16.0), child: AiPromptsConfigWidget())),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // Listen for queue changes to show notification bubbles
@@ -190,6 +268,29 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
         ),
         toolbarHeight: 80,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.announcement, color: Colors.orangeAccent),
+            tooltip: 'Display Controls & Announcements',
+            onPressed: () => _showPopup('Display Controls & Announcements', (dialogContext) => _buildDisplayControlsContent(ref)),
+          ),
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.greenAccent),
+            tooltip: 'Search & Add Songs',
+            onPressed: () => _showPopup('Song Library', (dialogContext) => SongLibrary(
+              actionLabel: 'Add to Queue', 
+              onSongSelected: (song) {
+                 Navigator.pop(dialogContext);
+                 _addSongToQueue(song);
+              },
+              showFilters: false,
+              hideSmule: true,
+            )),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.grey),
+            tooltip: 'Host Settings',
+            onPressed: () => _showSettingsPopup(ref),
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.flip_to_front, color: AppTheme.accentBlue),
             tooltip: 'Dashboards',
@@ -261,33 +362,19 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
             ],
           ),
           Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: server.isRunning ? AppTheme.accentPurple.withOpacity(0.2) : AppTheme.bgInput,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: server.isRunning ? AppTheme.accentPurple : AppTheme.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      server.isRunning ? Icons.wifi : Icons.wifi_off,
-                      size: 16,
-                      color: server.isRunning ? AppTheme.accentPurpleLight : AppTheme.textMuted,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      server.isRunning 
-                        ? (MediaQuery.of(context).size.width > 800 ? 'Connect Singers to: ${server.ipAddress}:8080' : '${server.ipAddress}:8080')
-                        : (MediaQuery.of(context).size.width > 800 ? 'Server is offline. Start it on the Home Screen.' : 'Offline'),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold, 
-                        color: server.isRunning ? AppTheme.accentPurpleLight : AppTheme.textMuted,
-                      ),
-                    ),
-                  ],
+            child: InteractiveHoverMenu(
+              width: 420,
+              menuWidget: _buildServerStatusCard(server, context, bottomAction: null),
+              child: InkWell(
+                onTap: () => _showSettingsPopup(ref, initialIndex: 0),
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Icon(
+                    server.isRunning ? Icons.wifi : Icons.wifi_off,
+                    size: 24,
+                    color: server.isRunning ? AppTheme.accentPurpleLight : AppTheme.textMuted,
+                  ),
                 ),
               ),
             ),
@@ -301,25 +388,17 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 3, child: _buildPlayerColumn()),
-                Expanded(flex: 4, child: _buildQueueColumn()),
-                Expanded(flex: 4, child: _buildLibraryColumn()),
+                Expanded(flex: 1, child: _buildPlayerColumn()),
+                Expanded(flex: 1, child: _buildQueueColumn()),
               ],
             );
           } else if (constraints.maxWidth > 800) {
-            return SingleChildScrollView(
-              child: Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 1, child: _buildPlayerColumn(isMobile: true)),
-                      Expanded(flex: 1, child: _buildQueueColumn(isMobile: true)),
-                    ],
-                  ),
-                  _buildLibraryColumn(isMobile: true),
-                ],
-              ),
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 1, child: _buildPlayerColumn(isMobile: true)),
+                Expanded(flex: 1, child: _buildQueueColumn(isMobile: true)),
+              ],
             );
           } else {
             return SingleChildScrollView(
@@ -327,7 +406,6 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                 children: [
                   _buildPlayerColumn(isMobile: true),
                   _buildQueueColumn(isMobile: true),
-                  _buildLibraryColumn(isMobile: true),
                 ],
               ),
             );
@@ -347,30 +425,22 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (nowPlaying != null)
+          if (nowPlaying != null) ...[
             AspectRatio(
               aspectRatio: 16 / 9,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, spreadRadius: 2)],
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: PlayerScreen(song: nowPlaying),
-                  ),
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    right: 16,
-                    child: _buildReactionsOverlay(),
-                  ),
-                ],
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, spreadRadius: 2)],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: PlayerScreen(song: nowPlaying),
               ),
             ),
+            const SizedBox(height: 8),
+            _buildReactionsOverlay(),
+          ],
           if (nowPlaying == null)
             AspectRatio(
               aspectRatio: 16 / 9,
@@ -385,10 +455,11 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
             ),
           const SizedBox(height: 16),
           
+          const ReactionPadCard(title: 'Live Reactions Pad', role: 'host'),
+          const SizedBox(height: 16),
+          
           _buildAiHostInfo(),
           
-          const SizedBox(height: 16),
-          const ReactionPadCard(title: 'Live Reactions Pad', role: 'host'),
           const SizedBox(height: 16),
           
           if (nowPlaying != null)
@@ -688,52 +759,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
     );
   }
 
-  Widget _buildLibraryColumn({bool isMobile = false}) {
-    return Container(
-      padding: const EdgeInsets.only(top: 16, right: 16, bottom: 16, left: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('Song Library', (c, r) => SongLibrary(actionLabel: 'Add to Queue', onSongSelected: _addSongToQueue)),
-          const SizedBox(height: 8),
-          isMobile
-            ? SizedBox(
-                height: 400,
-                child: SongLibrary(actionLabel: 'Add to Queue', onSongSelected: _addSongToQueue),
-              )
-            : Expanded(
-                child: Container(
-                  decoration: BoxDecoration(color: AppTheme.bgCard, borderRadius: BorderRadius.circular(8)),
-                  child: SongLibrary(actionLabel: 'Add to Queue', onSongSelected: _addSongToQueue),
-                ),
-              ),
-          const SizedBox(height: 16),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.45,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _buildDisplayControls(),
-                  const SizedBox(height: 12),
-                  if (ref.watch(appStateProvider).isPrimaryHost) ...[
-                    _buildNetworkConfigTile(),
-                    const SizedBox(height: 12),
-                  ],
-                  _buildManageLibraryTile(),
-                  const SizedBox(height: 12),
-                  _buildAppSettingsTile(),
-                  const SizedBox(height: 12),
-                  _buildAiPromptsTile(),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   void _showHistoryDialog() {
     showDialog(
@@ -1174,7 +1200,7 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
                   title: librarySong.title,
                   videoId: librarySong.videoId,
-                  isLocal: librarySong.source == 'local',
+                  isLocal: librarySong.source != 'youtube' && librarySong.source != 'smule',
                   requestedBy: hostUser?.id ?? 'host',
                   requestedByName: hostNameController.text.trim().isEmpty ? 'Host' : hostNameController.text.trim(),
                   duetSingerName: duetNameController.text.trim().isEmpty ? null : duetNameController.text.trim(),
@@ -1452,6 +1478,82 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
     );
   }
 
+  Widget _buildServerStatusCard(LocalServerService server, BuildContext context, {Widget? bottomAction}) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: server.isRunning ? AppTheme.accentPurple.withOpacity(0.1) : AppTheme.bgInput,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: server.isRunning ? AppTheme.accentPurple : AppTheme.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(server.isRunning ? Icons.wifi : Icons.wifi_off, color: server.isRunning ? AppTheme.accentPurpleLight : AppTheme.textMuted),
+                    const SizedBox(width: 8),
+                    Text(server.isRunning ? 'Server is Live' : 'Server Offline', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (server.isRunning) ...[
+                  const Text('Attendees can join at:', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                  Tooltip(
+                    message: 'Click to copy IP Address',
+                    child: InkWell(
+                      onTap: () {
+                        Clipboard.setData(ClipboardData(text: server.ipAddress ?? ''));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('IP Address copied to clipboard')));
+                      },
+                      borderRadius: BorderRadius.circular(4),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('http://${server.ipAddress}:8080', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.copy, size: 14, color: AppTheme.accentPurpleLight),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  const Text('Start the server to allow attendees to join.', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                ],
+                if (bottomAction != null) ...[
+                  const SizedBox(height: 12),
+                  bottomAction,
+                ],
+              ],
+            ),
+          ),
+          if (server.isRunning)
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(4),
+              margin: const EdgeInsets.only(left: 8),
+              child: QrImageView(
+                data: 'http://${server.ipAddress}:8080',
+                version: QrVersions.auto,
+                size: 90.0,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNetworkConfigContent(WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     
@@ -1473,86 +1575,45 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
               const SizedBox(height: 24),
               const Text('Local Server Status', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: server.isRunning ? AppTheme.accentPurple.withOpacity(0.1) : AppTheme.bgInput,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: server.isRunning ? AppTheme.accentPurple : AppTheme.border),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(server.isRunning ? Icons.wifi : Icons.wifi_off, color: server.isRunning ? AppTheme.accentPurpleLight : AppTheme.textMuted),
-                              const SizedBox(width: 8),
-                              Text(server.isRunning ? 'Server is Live' : 'Server Offline', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                            ],
+              _buildServerStatusCard(
+                server,
+                context,
+                bottomAction: ElevatedButton.icon(
+                  onPressed: () async {
+                    if (server.isRunning) {
+                      server.stopServer();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Server stopped.'),
+                            backgroundColor: Colors.redAccent,
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 2),
                           ),
-                          const SizedBox(height: 8),
-                          if (server.isRunning) ...[
-                            const Text('Attendees can join at:', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                            Text('http://${server.ipAddress}:8080', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                          ] else ...[
-                            const Text('Start the server to allow attendees to join.', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                          ],
-                          const SizedBox(height: 12),
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              if (server.isRunning) {
-                                server.stopServer();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Server stopped.'),
-                                      backgroundColor: Colors.redAccent,
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-                              } else {
-                                await server.startServer();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Server started successfully at ${server.ipAddress}:8080!'),
-                                      backgroundColor: Colors.green,
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: const Duration(seconds: 3),
-                                    ),
-                                  );
-                                }
-                              }
-                              setLocalState(() {});
-                              setState(() {}); // Updates the background screen behind the dialog too
-                            },
-                            icon: Icon(server.isRunning ? Icons.stop : Icons.play_arrow),
-                            label: Text(server.isRunning ? 'Stop Server' : 'Start Server'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: server.isRunning ? AppTheme.bgDark : AppTheme.accentPurple,
-                              foregroundColor: server.isRunning ? Colors.redAccent : Colors.white,
-                            ),
+                        );
+                      }
+                    } else {
+                      await server.startServer();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Server started successfully at ${server.ipAddress}:8080!'),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 3),
                           ),
-                        ],
-                      ),
-                    ),
-                    if (server.isRunning)
-                      Container(
-                        color: Colors.white,
-                        padding: const EdgeInsets.all(4),
-                        margin: const EdgeInsets.only(left: 8),
-                        child: QrImageView(
-                          data: 'http://${server.ipAddress}:8080',
-                          version: QrVersions.auto,
-                          size: 90.0,
-                        ),
-                      ),
-                  ],
+                        );
+                      }
+                    }
+                    setLocalState(() {});
+                    setState(() {}); // Updates the background screen behind the dialog too
+                  },
+                  icon: Icon(server.isRunning ? Icons.stop : Icons.play_arrow),
+                  label: Text(server.isRunning ? 'Stop Server' : 'Start Server'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: server.isRunning ? AppTheme.bgDark : AppTheme.accentPurple,
+                    foregroundColor: server.isRunning ? Colors.redAccent : Colors.white,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -1779,6 +1840,98 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
             child: AiPromptsConfigWidget(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class InteractiveHoverMenu extends StatefulWidget {
+  final Widget child;
+  final Widget menuWidget;
+  final double width;
+
+  const InteractiveHoverMenu({
+    super.key,
+    required this.child,
+    required this.menuWidget,
+    this.width = 420,
+  });
+
+  @override
+  State<InteractiveHoverMenu> createState() => _InteractiveHoverMenuState();
+}
+
+class _InteractiveHoverMenuState extends State<InteractiveHoverMenu> {
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
+  bool _isHovering = false;
+  bool _isHoveringMenu = false;
+
+  void _showMenu() {
+    if (_overlayEntry != null) return;
+    final overlay = Overlay.of(context);
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          width: widget.width,
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            offset: Offset(-widget.width + 40, 48),
+            child: MouseRegion(
+              onEnter: (_) {
+                _isHoveringMenu = true;
+              },
+              onExit: (_) {
+                _isHoveringMenu = false;
+                _checkHideMenu();
+              },
+              child: Material(
+                color: Colors.transparent,
+                elevation: 8,
+                borderRadius: BorderRadius.circular(12),
+                child: widget.menuWidget,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    overlay.insert(_overlayEntry!);
+  }
+
+  void _checkHideMenu() {
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (mounted && !_isHovering && !_isHoveringMenu) {
+        _overlayEntry?.remove();
+        _overlayEntry = null;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: MouseRegion(
+        onEnter: (_) {
+          _isHovering = true;
+          _showMenu();
+        },
+        onExit: (_) {
+          _isHovering = false;
+          _checkHideMenu();
+        },
+        child: widget.child,
       ),
     );
   }
