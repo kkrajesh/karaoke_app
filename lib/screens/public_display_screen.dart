@@ -83,7 +83,8 @@ class _PublicDisplayScreenState extends ConsumerState<PublicDisplayScreen> {
                             Positioned.fill(
                               child: PlayerScreen(
                                 key: activePlayerKey,
-                                song: nowPlaying, // can be null
+                                song: nowPlaying,
+                                isPublicDisplay: true,
                               ),
                             ),
                             // 2. Intermission overlay if no song is playing

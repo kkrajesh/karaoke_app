@@ -19,6 +19,7 @@
 
     - [] Public Display
         - [x] Add real-time QR code to join the event that is displayed on the screen.
+        - [x] the "Queue AI Process" overlay button over the video player should not be available in public display screen.
     - [] Singer Display
         - [x] ability to add a second singer for a duet
         - [x] ability to swap singers for a duet
@@ -68,6 +69,16 @@
     - [] add a settings page to configure the AI Song Trivia
     - [] add a settings page to configure the AI Word Cloud 
     - [] add a settings page to configure the AI to generate song trivia and fun facts for current song
+    - [] ability to see the status of backend services and AI services, with an option to start them if it is not running
+        - [] queue watcher
+        - [] song search
+        - [] youtube fetcher
+        - [] smule fetcher
+        - [] lyrics fetcher
+        - [] practice mp3 generator
+        - [] process song
+        - [] reprocess song
+        - [] process song
 
 - [] Google Sheet Logging
     - [] Add ability to see the last time a song was sung and when it was sung.
@@ -90,8 +101,8 @@
     
 - Git Repo
     - [x] Please make sure that all the changes are checked into git 
-    - [x] Please update all MD files with relevant information for all the apps
-    - [x] Please check in all the changes to git with a version update and release notes for each app   
+    - [] Please update all MD files with relevant information for all the apps
+    - [] Please check in and commit all the changes to git with a version update and release notes for each app   
 
 
 - Build & Deployment

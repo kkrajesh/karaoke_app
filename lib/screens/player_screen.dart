@@ -15,8 +15,9 @@ import 'dart:io' show Platform;
 import 'package:vox_player_core/vox_player_core.dart';
 class PlayerScreen extends ConsumerStatefulWidget {
   final Song? song;
+  final bool isPublicDisplay;
 
-  const PlayerScreen({super.key, this.song});
+  const PlayerScreen({super.key, this.song, this.isPublicDisplay = false});
 
   @override
   ConsumerState<PlayerScreen> createState() => _PlayerScreenState();
@@ -239,7 +240,7 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
                 ),
               ),
 
-              if (widget.song != null && !widget.song!.isLocal)
+              if (widget.song != null && !widget.song!.isLocal && !widget.isPublicDisplay)
                 Positioned(
                   top: 16,
                   right: 16,

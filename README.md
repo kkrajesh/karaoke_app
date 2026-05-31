@@ -2,6 +2,11 @@
 
 The core public-facing application for the Karaoke Ecosystem. It serves as the DJ/Host dashboard, allowing the user to manage the active song queue, stream high-quality audio/video from YouTube or local files, and display a public Karaoke screen.
 
+## 🚀 Release Notes (v2.6.1)
+- **Settings & Dashboard Integration**: Inherited `vox_player_core` upgrades, exposing the new "Services" tab within the unified settings screen.
+- **Backend Service Monitoring**: Hosts can now natively monitor the health of `api_server.py` and `queue_watcher.py` (with heartbeat detection) directly from the app.
+- **AI Queue**: Enhanced log reviewing capabilities in the AI queue manager, featuring real-time terminal-style logging with timestamps.
+
 ## 🚀 Release Notes (v2.6.0)
 - **Host Dashboard UI Redesign**: Transitioned to a clean, highly efficient two-column layout. Eliminated intermediate menus for a smoother Host experience.
 - **Interactive Hover Menus**: Replaced standard Wifi Tooltips with a custom Interactive Hover Overlay, displaying Live Server status, QR code, and a one-click copyable IP address.
@@ -38,7 +43,24 @@ The core public-facing application for the Karaoke Ecosystem. It serves as the D
 1. Clone the repository.
 2. Run Flutter pub get: `flutter pub get`
 
-## 🕹 Usage Instructions
-1. Start the application: `flutter run -d windows`
-2. Search for a YouTube song or select a local file to add it to the queue.
-3. Click play to launch the public video overlay.
+## 🕹 Unified Startup Sequence
+To run the full ecosystem (Backend Services + Flutter Apps):
+
+**1. Start the Python API Server (Flask Backend)**
+```bash
+cd ../Karaoke_Maker/core_engine
+python api_server.py
+```
+
+**2. Start the AI Queue Watcher**
+```bash
+cd ../Karaoke_Maker
+python queue_watcher.py
+```
+
+**3. Start the Host App**
+```bash
+flutter run -d windows
+```
+
+*Pro Tip: You can now monitor and start these Python backend services directly from the Settings > Services dashboard in the Flutter apps!*
