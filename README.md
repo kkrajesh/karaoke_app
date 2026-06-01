@@ -2,6 +2,11 @@
 
 The core public-facing application for the Karaoke Ecosystem. It serves as the DJ/Host dashboard, allowing the user to manage the active song queue, stream high-quality audio/video from YouTube or local files, and display a public Karaoke screen.
 
+## 🚀 Release Notes (v2.7.0)
+- **FastAPI Migration**: Completely integrated with the new `karaoke_orchestrator.py` server, allowing WebSockets-based AI Queue management directly from the Host App dashboard.
+- **Improved Reprocessing**: Enhanced Library menu to natively support "Force Full Reprocess" and "Re-download Audio" actions seamlessly through `vox_player_core`.
+- **Bug Fixes**: Resolved internal payload syncing issues resulting in failed Audio fetches for Library components.
+
 ## 🚀 Release Notes (v2.6.1)
 - **Settings & Dashboard Integration**: Inherited `vox_player_core` upgrades, exposing the new "Services" tab within the unified settings screen.
 - **Backend Service Monitoring**: Hosts can now natively monitor the health of `api_server.py` and `queue_watcher.py` (with heartbeat detection) directly from the app.
@@ -46,16 +51,10 @@ The core public-facing application for the Karaoke Ecosystem. It serves as the D
 ## 🕹 Unified Startup Sequence
 To run the full ecosystem (Backend Services + Flutter Apps):
 
-**1. Start the Python API Server (Flask Backend)**
+**1. Start the Orchestrator API Server**
 ```bash
 cd ../Karaoke_Maker/core_engine
-python api_server.py
-```
-
-**2. Start the AI Queue Watcher**
-```bash
-cd ../Karaoke_Maker
-python queue_watcher.py
+python karaoke_orchestrator.py
 ```
 
 **3. Start the Host App**
