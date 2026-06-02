@@ -71,6 +71,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -115,6 +116,12 @@ flutter:
   # see https://flutter.dev/to/font-from-package
   assets:
     - assets/
+    - assets/app_icon.png
     - assets/Sagarangale Padi - Unplugged.mp4
     - assets/Tum Bin Jaaoon Kahan.opus
     - assets/Thekku Thekku Thekke Paadam-Unplugged.mp4
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/app_icon.png"
