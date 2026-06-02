@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vox_player_core/vox_player_core.dart';
 import '../models/app_user.dart';
 
 class AppState {
@@ -69,7 +70,14 @@ final appUserProvider = Provider<AppUser?>((ref) => ref.watch(appStateProvider).
 class ClientHostIpNotifier extends Notifier<String?> {
   @override
   String? build() => null;
-  void setIp(String? ip) => state = ip;
+  void setIp(String? ip) {
+    state = ip;
+    if (ip != null) {
+      VoxApiService.baseUrl = 'http://$ip:5000';
+    } else {
+      VoxApiService.baseUrl = 'http://127.0.0.1:5000';
+    }
+  }
 }
 
 final clientHostIpProvider = NotifierProvider<ClientHostIpNotifier, String?>(() {

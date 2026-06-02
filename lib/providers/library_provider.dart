@@ -12,7 +12,7 @@ final voxSearchProvidersProvider = Provider<List<VoxSearchProvider>>((ref) {
 
   String? hostUrl;
   if (hostIp != null) {
-    hostUrl = 'http://$hostIp:8080';
+    hostUrl = 'http://$hostIp:5000';
   }
 
   return [
