@@ -2,6 +2,10 @@
 
 The core public-facing application for the Karaoke Ecosystem. It serves as the DJ/Host dashboard, allowing the user to manage the active song queue, stream high-quality audio/video from YouTube or local files, and display a public Karaoke screen.
 
+## 🚀 Release Notes (v2.7.1)
+- **Remote Local-Media Search**: Fixed network routing bugs where remote clients (Web/Android) incorrectly polled their own `localhost` for local media DB lookups. They now intelligently route API queries dynamically to the Host PC.
+- **Web App Parity**: Ensured `kIsWeb` guards were put in place to avoid `Unsupported operation: _Namespace` sandbox crashes caused by `dart:io` when rendering search results in the browser.
+
 ## 🚀 Release Notes (v2.7.0)
 - **FastAPI Migration**: Completely integrated with the new `karaoke_orchestrator.py` server, allowing WebSockets-based AI Queue management directly from the Host App dashboard.
 - **Improved Reprocessing**: Enhanced Library menu to natively support "Force Full Reprocess" and "Re-download Audio" actions seamlessly through `vox_player_core`.
