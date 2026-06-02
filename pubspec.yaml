@@ -122,6 +122,8 @@ flutter:
     - assets/Thekku Thekku Thekke Paadam-Unplugged.mp4
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: true
   ios: true
   image_path: "assets/app_icon.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/app_icon.png"

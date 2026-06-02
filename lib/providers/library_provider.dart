@@ -17,7 +17,7 @@ final voxSearchProvidersProvider = Provider<List<VoxSearchProvider>>((ref) {
 
   return [
     YoutubeVoxSearchProvider(ytService),
-    MediaMonkeySearchProvider(hostUrl: hostUrl, prioritizeLocal: false),
+    MediaMonkeySearchProvider(hostUrl: hostUrl),
     SmuleVoxSearchProvider(smuleService),
   ];
 });
