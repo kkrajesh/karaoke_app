@@ -2,6 +2,10 @@
 
 The core public-facing application for the Karaoke Ecosystem. It serves as the DJ/Host dashboard, allowing the user to manage the active song queue, stream high-quality audio/video from YouTube or local files, and display a public Karaoke screen.
 
+## 🚀 Release Notes (v2.7.4)
+- **Sequence Editor Enhancements**: Brought in the latest `vox_player_core` v0.4.2 upgrades, which includes an intuitive dropdown menu directly inside the Sequence Editor. Users can now seamlessly switch between performance sequences without backing out to the main dashboard.
+- **Data Safety Guardrails**: The Sequence Editor now actively prompts users if they attempt to switch sequences while there are unsaved changes.
+
 ## 🚀 Release Notes (v2.7.3)
 - **AI Queue Bug Fixes**: Fixed a bug where MediaMonkey IDs were not passed correctly to the `CreateSongScreen` leading to tasks being improperly prefixed with `UNKNOWN_`.
 - **MediaMonkey Search**: Enhanced `UnifiedSearchUI` to pre-fill the song title and auto-select the current URL when opening the "Link MediaMonkey" dialog.
