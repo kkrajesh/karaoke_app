@@ -2,6 +2,10 @@
 
 The core public-facing application for the Karaoke Ecosystem. It serves as the DJ/Host dashboard, allowing the user to manage the active song queue, stream high-quality audio/video from YouTube or local files, and display a public Karaoke screen.
 
+## 🚀 Release Notes (v2.7.3)
+- **AI Queue Bug Fixes**: Fixed a bug where MediaMonkey IDs were not passed correctly to the `CreateSongScreen` leading to tasks being improperly prefixed with `UNKNOWN_`.
+- **MediaMonkey Search**: Enhanced `UnifiedSearchUI` to pre-fill the song title and auto-select the current URL when opening the "Link MediaMonkey" dialog.
+
 ## 🚀 Release Notes (v2.7.2)
 - **Android App Polish**: Fixed Android local search mapping. Removed hardcoded network overrides to ensure the app natively queries the on-device MediaMonkey SQLite database.
 - **Adaptive Icons**: Generated and configured proper Android 8.0+ Adaptive Icons (`mipmap-anydpi-v26`) ensuring the custom Karaoke App logo displays correctly on modern devices without falling back to the default Flutter icon.
