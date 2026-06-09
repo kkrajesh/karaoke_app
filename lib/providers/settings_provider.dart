@@ -17,6 +17,7 @@ class AppSettings {
   final String llmUrl;
   final String llmModel;
   final String aiLanguages;
+  final String aiVaultPath;
 
   AppSettings({
     this.eventName = '',
@@ -28,6 +29,7 @@ class AppSettings {
     this.llmUrl = 'http://localhost:1234',
     this.llmModel = 'local-model',
     this.aiLanguages = 'English, Hindi, Tamil, Malayalam, Telugu',
+    this.aiVaultPath = r'C:\Users\rajes\.vox_ai_vault',
   });
 
   AppSettings copyWith({
@@ -40,6 +42,7 @@ class AppSettings {
     String? llmUrl,
     String? llmModel,
     String? aiLanguages,
+    String? aiVaultPath,
   }) {
     return AppSettings(
       eventName: eventName ?? this.eventName,
@@ -51,6 +54,7 @@ class AppSettings {
       llmUrl: llmUrl ?? this.llmUrl,
       llmModel: llmModel ?? this.llmModel,
       aiLanguages: aiLanguages ?? this.aiLanguages,
+      aiVaultPath: aiVaultPath ?? this.aiVaultPath,
     );
   }
 }
@@ -81,6 +85,7 @@ class SettingsNotifier extends Notifier<AppSettings> {
       llmUrl: prefs.getString('llmUrl') ?? 'http://localhost:1234',
       llmModel: prefs.getString('llmModel') ?? 'local-model',
       aiLanguages: prefs.getString('aiLanguages') ?? 'English, Hindi, Tamil, Malayalam, Telugu',
+      aiVaultPath: prefs.getString('aiVaultPath') ?? r'C:\Users\rajes\.vox_ai_vault',
     );
   }
 
@@ -105,6 +110,7 @@ class SettingsNotifier extends Notifier<AppSettings> {
     if (llmUrl != null) await prefs.setString('llmUrl', llmUrl);
     if (llmModel != null) await prefs.setString('llmModel', llmModel);
     if (aiLanguages != null) await prefs.setString('aiLanguages', aiLanguages);
+    if (aiVaultPath != null) await prefs.setString('aiVaultPath', aiVaultPath);
 
     state = state.copyWith(
       eventName: eventName,

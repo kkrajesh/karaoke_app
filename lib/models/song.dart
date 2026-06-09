@@ -21,6 +21,7 @@ class Song {
   final String? dedication;
   final String? hostNote;
   final String? aiTrivia;
+  final String? activeSequenceName;
 
   Song({
     required this.id,
@@ -36,6 +37,7 @@ class Song {
     this.dedication,
     this.hostNote,
     this.aiTrivia,
+    this.activeSequenceName,
   });
 
   factory Song.fromMap(Map<String, dynamic> map, String documentId) {
@@ -55,6 +57,7 @@ class Song {
       dedication: map['dedication'],
       hostNote: map['hostNote'],
       aiTrivia: map['aiTrivia'],
+      activeSequenceName: map['activeSequenceName'],
     );
   }
 
@@ -72,6 +75,7 @@ class Song {
       if (dedication != null) 'dedication': dedication,
       if (hostNote != null) 'hostNote': hostNote,
       if (aiTrivia != null) 'aiTrivia': aiTrivia,
+      if (activeSequenceName != null) 'activeSequenceName': activeSequenceName,
     };
   }
 
@@ -89,6 +93,7 @@ class Song {
     String? dedication,
     String? hostNote,
     String? aiTrivia,
+    String? activeSequenceName,
   }) {
     return Song(
       id: id ?? this.id,
@@ -104,6 +109,7 @@ class Song {
       dedication: dedication ?? this.dedication,
       hostNote: hostNote ?? this.hostNote,
       aiTrivia: aiTrivia ?? this.aiTrivia,
+      activeSequenceName: activeSequenceName ?? this.activeSequenceName,
     );
   }
 }

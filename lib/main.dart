@@ -6,6 +6,7 @@ import 'theme/app_theme.dart';
 
 import 'package:media_kit/media_kit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vox_player_core/vox_player_core.dart';
 import 'providers/settings_provider.dart';
 
 void main() async {
@@ -13,6 +14,12 @@ void main() async {
   MediaKit.ensureInitialized();
   
   final prefs = await SharedPreferences.getInstance();
+  
+  final aiVaultPath = prefs.getString('aiVaultPath') ?? r'C:\Users\rajes\.vox_ai_vault';
+  VoxSettingsService.init(
+    aiVaultPath: aiVaultPath,
+    aiHotZonePath: r'C:\Users\rajes\.vox_ai_hotzone',
+  );
 
   runApp(
     ProviderScope(

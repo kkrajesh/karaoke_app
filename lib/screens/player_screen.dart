@@ -12,6 +12,7 @@ import '../models/song.dart';
 import 'package:video_player/video_player.dart';
 import '../theme/app_theme.dart';
 import 'dart:io' show Platform;
+import 'dart:async';
 import 'package:vox_player_core/vox_player_core.dart';
 class PlayerScreen extends ConsumerStatefulWidget {
   final Song? song;
@@ -33,6 +34,13 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
   VideoController? _nativeController;
   bool _isLoadingNative = true;
   String? _nativeError;
+
+  // Sequence Tracking
+  PerformanceProfile? _profile;
+  Sequence? _activeSequence;
+  int _currentSequenceIndex = 0;
+  Timer? _webPositionTimer;
+  StreamSubscription<Duration>? _nativePositionSub;
 
   @override
   void initState() {
@@ -58,18 +66,33 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
 
 
 
-  void _initSong(Song newSong) {
+  Future<void> _initSong(Song newSong) async {
+    // 1. Fetch performance profile if a sequence is requested
+    if (newSong.activeSequenceName != null) {
+      final mmId = newSong.isLocal ? newSong.id : 'YT_${newSong.videoId}';
+      final saveDir = VoxAiTrackingService.instance.getArtifactDirectory(mmId, newSong.title);
+      try {
+        _profile = await PerformanceProfileService.loadProfile(saveDir);
+        _activeSequence = _profile?.sequences.firstWhere((s) => s.name == newSong.activeSequenceName);
+        _currentSequenceIndex = 0;
+      } catch (e) {
+        print('Error loading profile for sequence: $e');
+      }
+    }
+
     if (kIsWeb) {
       if (newSong.videoId.startsWith('https://www.smule.com')) {
-        _initWebSmulePlayer(newSong.videoId);
+        await _initWebSmulePlayer(newSong.videoId);
       } else if (newSong.isLocal) {
-        _initWebLocalPlayer(newSong.videoId);
+        await _initWebLocalPlayer(newSong.videoId);
       } else {
         _initWebYtPlayer(newSong.videoId);
       }
     } else {
-      _initNativePlayer(newSong);
+      await _initNativePlayer(newSong);
     }
+    
+    _setupSequenceListeners();
   }
 
   Future<void> _initWebSmulePlayer(String smuleUrl) async {
@@ -158,11 +181,74 @@ class _PlayerScreenState extends ConsumerState<PlayerScreen> {
     }
   }
 
+  void _setupSequenceListeners() {
+    if (_activeSequence == null || _activeSequence!.segments.isEmpty) return;
 
+    if (!kIsWeb && _nativePlayer != null) {
+      _nativePositionSub = _nativePlayer!.stream.position.listen((pos) {
+        _enforceSequenceBoundary(pos);
+      });
+    } else if (kIsWeb) {
+      _webPositionTimer = Timer.periodic(const Duration(milliseconds: 500), (_) async {
+        Duration currentPosition = Duration.zero;
+        if (_webYtController != null) {
+          final seconds = await _webYtController!.currentTime;
+          currentPosition = Duration(milliseconds: (seconds * 1000).toInt());
+        } else if (_webLocalController != null) {
+          currentPosition = _webLocalController!.value.position;
+        }
+        _enforceSequenceBoundary(currentPosition);
+      });
+    }
+  }
+
+  void _enforceSequenceBoundary(Duration currentPosition) {
+    if (_activeSequence == null || _activeSequence!.segments.isEmpty) return;
+    if (_currentSequenceIndex >= _activeSequence!.segments.length) return;
+
+    final currentSegment = _activeSequence!.segments[_currentSequenceIndex];
+    
+    // Check if we need to jump to the start of the current segment
+    // We add a tiny buffer so we don't infinitely seek backwards
+    if (currentPosition < currentSegment.startTime - const Duration(milliseconds: 1000)) {
+       _seekTo(currentSegment.startTime);
+       return;
+    }
+
+    // Check if we reached the end of the current segment
+    if (currentPosition >= currentSegment.endTime) {
+      _currentSequenceIndex++;
+      if (_currentSequenceIndex < _activeSequence!.segments.length) {
+        // Jump to next segment
+        _seekTo(_activeSequence!.segments[_currentSequenceIndex].startTime);
+      } else {
+        // End of sequence - pause playback
+        if (!kIsWeb && _nativePlayer != null) {
+          _nativePlayer!.pause();
+        } else if (kIsWeb && _webYtController != null) {
+          _webYtController!.pauseVideo();
+        } else if (kIsWeb && _webLocalController != null) {
+          _webLocalController!.pause();
+        }
+      }
+    }
+  }
+
+  void _seekTo(Duration position) {
+    if (!kIsWeb && _nativePlayer != null) {
+      _nativePlayer!.seek(position);
+    } else if (kIsWeb && _webYtController != null) {
+      _webYtController!.seekTo(seconds: position.inSeconds.toDouble(), allowSeekAhead: true);
+    } else if (kIsWeb && _webLocalController != null) {
+      _webLocalController!.seekTo(position);
+    }
+  }
 
   @override
   void dispose() {
     print('[PlayerScreen] dispose called for song: ${widget.song?.id}');
+    _nativePositionSub?.cancel();
+    _webPositionTimer?.cancel();
     _webYtController?.close();
     _webLocalController?.dispose();
     if (!kIsWeb) {

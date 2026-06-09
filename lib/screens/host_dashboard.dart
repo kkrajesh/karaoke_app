@@ -22,6 +22,7 @@ import 'singer_dashboard.dart';
 import 'audience_dashboard.dart';
 import 'public_display_screen.dart';
 import 'ai_prompts_config_widget.dart';
+import 'package:vox_player_core/vox_player_core.dart';
 
 class HostDashboard extends ConsumerStatefulWidget {
   const HostDashboard({super.key});
@@ -209,8 +210,18 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
             ),
           ],
         ),
-      );
-    });
+      ),
+      if (index == 0) ...[
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: _buildSequenceSelector(song),
+        ),
+        const SizedBox(height: 8),
+      ],
+      ]
+    );
+  });
   }
 
   @override
@@ -416,6 +427,130 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
     );
   }
 
+  Future<void> _openSequenceEditor(Song song) async {
+    final mmId = song.isLocal ? song.id : 'YT_${song.videoId}';
+    final saveDir = VoxAiTrackingService.instance.getArtifactDirectory(mmId, song.title);
+    
+    PerformanceProfile profile;
+    try {
+      profile = await PerformanceProfileService.loadProfile(saveDir);
+    } catch (e) {
+      profile = PerformanceProfile();
+    }
+    
+    VoxMediaSource? source;
+    if (!song.isLocal) {
+       source = VoxMediaSource(url: 'https://www.youtube.com/watch?v=${song.videoId}', isYoutube: true);
+    } else {
+       final url = song.videoId.replaceAll('\\', '/');
+       source = VoxMediaSource(url: url.startsWith('file:') ? url : 'file:///$url', isYoutube: false);
+    }
+
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      useSafeArea: false,
+      builder: (context) {
+        return Dialog.fullscreen(
+          child: VoxPlayerDashboard(
+             source: source,
+             directoryPath: saveDir,
+             performanceProfile: profile,
+             onProfileSaved: (updatedProfile) {
+                setState(() {});
+             },
+          ),
+        );
+      }
+    );
+  }
+
+  Widget _buildSequenceSelector(Song song) {
+    final mmId = song.isLocal ? song.id : 'YT_${song.videoId}';
+    final saveDir = VoxAiTrackingService.instance.getArtifactDirectory(mmId, song.title);
+
+    return FutureBuilder<PerformanceProfile>(
+      future: PerformanceProfileService.loadProfile(saveDir).catchError((_) => PerformanceProfile()),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
+        
+        final profile = snapshot.data!;
+        if (profile.sequences.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Row(
+              children: [
+                const Icon(Icons.linear_scale, color: Colors.grey, size: 16),
+                const SizedBox(width: 8),
+                const Text('No sequences configured', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: () => _openSequenceEditor(song),
+                  icon: const Icon(Icons.edit, size: 16),
+                  label: const Text('Create'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppTheme.bgDark.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.timeline, color: AppTheme.accentPink, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Active Sequence', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                    DropdownButton<String>(
+                      isExpanded: true,
+                      value: song.activeSequenceName,
+                      dropdownColor: AppTheme.bgInput,
+                      underline: const SizedBox.shrink(),
+                      hint: const Text('Default (Full Song)', style: TextStyle(color: Colors.white)),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('Default (Full Song)', style: TextStyle(color: Colors.white)),
+                        ),
+                        ...profile.sequences.map((seq) {
+                          return DropdownMenuItem<String>(
+                            value: seq.name,
+                            child: Text(seq.name, style: const TextStyle(color: Colors.white)),
+                          );
+                        }).toList(),
+                      ],
+                      onChanged: (val) {
+                        ref.read(sessionStateProvider.notifier).setActiveSequence(song.id, val);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.edit, color: AppTheme.accentPurpleLight),
+                tooltip: 'Sequence Editor',
+                onPressed: () => _openSequenceEditor(song),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildPlayerColumn({bool isMobile = false}) {
     final nowPlaying = ref.watch(nowPlayingProvider);
     
@@ -438,6 +573,8 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
                 child: PlayerScreen(song: nowPlaying),
               ),
             ),
+            const SizedBox(height: 8),
+            _buildSequenceSelector(nowPlaying),
             const SizedBox(height: 8),
             _buildReactionsOverlay(),
           ],
@@ -896,16 +1033,18 @@ class _HostDashboardState extends ConsumerState<HostDashboard> {
 
   Widget _buildQueueItem(Song song, int index) {
     final queueLength = ref.read(queueProvider).where((s) => !s.isRequest).length;
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: AppTheme.accentPurple,
-        child: Text('${index + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      ),
-      title: Text(song.displaySingerName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-      subtitle: Text(song.title, style: const TextStyle(color: AppTheme.textMuted)),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+    return Column(
+      children: [
+        ListTile(
+          leading: CircleAvatar(
+            backgroundColor: AppTheme.accentPurple,
+            child: Text('${index + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+          title: Text(song.displaySingerName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+          subtitle: Text(song.title, style: const TextStyle(color: AppTheme.textMuted)),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
           if (index > 0)
             IconButton(
               icon: const Icon(Icons.arrow_upward, size: 18, color: Colors.white70),

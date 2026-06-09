@@ -559,6 +559,22 @@ class SessionStateNotifier extends Notifier<SessionState> {
     }
   }
 
+  void setActiveSequence(String id, String? sequenceName) {
+    if (_isClient) return; // Only host
+    
+    if (state.nowPlaying?.id == id) {
+      state = state.copyWithNullableNowPlaying(nowPlaying: state.nowPlaying!.copyWith(activeSequenceName: sequenceName));
+      return;
+    }
+    
+    final idx = state.queue.indexWhere((s) => s.id == id);
+    if (idx != -1) {
+      final newQueue = List<Song>.from(state.queue);
+      newQueue[idx] = newQueue[idx].copyWith(activeSequenceName: sequenceName);
+      state = state.copyWith(queue: newQueue);
+    }
+  }
+
   Future<void> pushAnnouncement(String? message) async {
     if (_isClient) {
       try {
