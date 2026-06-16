@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.7.8+1
+* Pulled in `vox_player_core` 0.4.9 which includes a collapsible controls panel to maximize viewing area in landscape.
+* Minor documentation updates.
+
 ## 2.7.7+1
 * Pulled in vox_player_core 0.4.7 which includes Medley Draft saving and loading features.
 
