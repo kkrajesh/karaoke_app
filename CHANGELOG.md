@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.7.9+1
+* Pulled in `vox_player_core` 0.5.1 containing UI bug fixes for `UNKNOWN_` prefixed songs and song library navigation.
+* Unified search integrations and UI refinements pulled from `vox_player_core`.
+* Miscellaneous task list updates.
+
 ## 2.7.8+1
 * Pulled in `vox_player_core` 0.4.9 which includes a collapsible controls panel to maximize viewing area in landscape.
 * Minor documentation updates.
