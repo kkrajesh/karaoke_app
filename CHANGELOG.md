@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.8.0+1
+* Pulled in `vox_player_core` 0.5.3 containing `AudioSession` integrations for background metadata and Android notifications.
+* Updated Android manifest for leanback support.
+* Synced documentation and task lists.
+
 ## 2.7.9+1
 * Pulled in `vox_player_core` 0.5.1 containing UI bug fixes for `UNKNOWN_` prefixed songs and song library navigation.
 * Unified search integrations and UI refinements pulled from `vox_player_core`.

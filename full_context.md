@@ -9,7 +9,7 @@ The Host Application of the Karaoke Ecosystem. It is built to seamlessly manage 
 - **Local Media Server**: Includes a lightweight HTTP server to stream local files to web-based sub-views if necessary.
 
 ## Current Migration Phase
-We have completed **Phase 9** of the ecosystem master plan regarding this app. The `vox_player_core` package is fully integrated, replacing the internal custom players with a unified, cross-platform media engine that supports intelligent dual-pane `.lrc` lyrics, pitch tracking, and SQLite AI Tracking.
+We have completed **Phase 9** of the ecosystem master plan regarding this app. The `vox_player_core` package is fully integrated, replacing the internal custom players with a unified, cross-platform media engine that supports intelligent dual-pane `.lrc` lyrics, pitch tracking, SQLite AI Tracking, and persistent background music playback with rich lock-screen metadata.
 
 ## Ecosystem Role
 The "Consumer". It securely reads the local `MM.DB` (MediaMonkey) and `vox_ai_metadata.db` to deliver a premium singing experience to the end-users, natively tracking AI artifacts like Vocals, Pitch Data, and Lyrics.
