@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.9.0+1
+* Pulled in `vox_player_core` 0.6.0 with major stability fixes for Windows `media_kit` native crash during layout shifts and hot restarts.
+* Fixed Sequence Editor native unmounting crashes by introducing KeyedSubtree stability.
+* Wired up Sequence Editor bottom toolbar shortcut icon for in-place access.
+* Expanded precision Transition Editor preview window to 20 seconds (+/- 10s).
+* Fixed DropdownButton assertion crash when saving a Sequence Editor profile.
+
 ## 2.8.0+1
 * Pulled in `vox_player_core` 0.5.3 containing `AudioSession` integrations for background metadata and Android notifications.
 * Updated Android manifest for leanback support.
