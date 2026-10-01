@@ -101,8 +101,9 @@
     
 - Git Repo
     - [x] Please make sure that all the changes are checked into git 
-    - [] Please update all MD (README, context files, techstack, tasklists) files with relevant information for all the apps
-    - [] Please check in and commit & push all the changes to git with a version update and release notes for each app   
+    - [x] Please update all MD (README, context files, techstack, tasklists) files with relevant information for all the apps
+    - [x] Please check in and commit & push all the changes to git with a version update and release notes for each app   
+        - no need to ask for permission to do git commands, go ahead an exectute them.
     - [] Don't do git operations further, until I specifically ask for it
 
 
@@ -113,3 +114,10 @@
     - [] build web - flutter build web --release
     - [] Copy the builds to a shared drive (C:\Data\Rajesh\Dev\Executables\KaraokeHost) so I can pick them up from other machines for testing
         - [] make sure the web build is copied to same directory where the windows executables are stored for easy testing of all builds. 
+
+- Minor fixs, features
+    - Practice App
+        - [x] Make the main side bar in practice app look more premium, use modern ui components and make it more visually appealing. Add some animations and transitions.
+        - [x] make the main sidebar unpinned by default in practice app
+        - [x] active session: when lyrics panel is hidden and lyrics are overlayed on the pitch graph - use bigger font for native one and smaller font for the english one (opposite of what it is now). Give option to adjust the relative font sizes and color of the two from settings page.
+        - [x] lyrics editor - make the "sync scroll to active" a toggle with default behaviour is to keep the scroll in sync and it gets toggle off when user manuall scrolls or making any edits.
