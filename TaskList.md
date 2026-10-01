@@ -101,8 +101,8 @@
     
 - Git Repo
     - [x] Please make sure that all the changes are checked into git 
-    - [x] Please update all MD (README, context files, techstack, tasklists) files with relevant information for all the apps
-    - [x] Please check in and commit & push all the changes to git with a version update and release notes for each app   
+    - [] Please update all MD (README, context files, techstack, tasklists) files with relevant information for all the apps
+    - [] Please check in and commit & push all the changes to git with a version update and release notes for each app   
     - [] Don't do git operations further, until I specifically ask for it
 
 
