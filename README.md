@@ -2,6 +2,11 @@
 
 The core public-facing application for the Karaoke Ecosystem. It serves as the DJ/Host dashboard, allowing the user to manage the active song queue, stream high-quality audio/video from YouTube or local files, and display a public Karaoke screen.
 
+## 🚀 Release Notes (v2.10.3)
+- **vox_player_core v0.7.4**: Pulled in latest player core featuring multi-line lyrics timing tools (Select All / Deselect All, individual line checkboxes, bulk +/- 100ms offset adjustments), and server-side video rendering client APIs.
+- **Platform Plugin Bindings**: Updated platform plugin registrant bindings and dependency locks.
+- **Task List Sync**: Updated project documentation and completed repo sync tasks.
+
 ## 🚀 Release Notes (v2.7.7)
 - **Medley Drafts Integration**: Inherited Medley Draft saving, loading, and unsaved changes tracking from `vox_player_core` v0.4.7.
 

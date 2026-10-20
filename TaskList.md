@@ -75,7 +75,7 @@
         - [] youtube fetcher
         - [] smule fetcher
         - [] lyrics fetcher
-        - [] practice mp3 generator
+        - [x] practice mp3 generator
         - [] process song
         - [] reprocess song
         - [] process song
@@ -101,10 +101,10 @@
     
 - Git Repo
     - [x] Please make sure that all the changes are checked into git 
-    - [x] Please update all MD (README, context files, techstack, tasklists) files with relevant information for all the apps
+    - [x] Please update all MD (README, context files, techstack, tasklists) files with relevant information for all the changed apps
     - [x] Please check in and commit & push all the changes to git with a version update and release notes for each app   
         - no need to ask for permission to do git commands, go ahead an exectute them.
-    - [] Don't do git operations further, until I specifically ask for it
+    - [x] Don't do git operations further, until I specifically ask for it
 
 
 - Build & Deployment

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.10.3+1
+* Pulled in `vox_player_core` 0.7.4 with batch multi-line selection tools and mass time-shift adjustments in the Lyrics Editor.
+* Updated platform plugin registrant bindings and dependency locks.
+* Synced documentation and task lists.
+
 ## 2.9.0+1
 * Pulled in `vox_player_core` 0.6.0 with major stability fixes for Windows `media_kit` native crash during layout shifts and hot restarts.
 * Fixed Sequence Editor native unmounting crashes by introducing KeyedSubtree stability.
